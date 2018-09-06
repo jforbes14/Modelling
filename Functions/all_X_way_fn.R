@@ -1,11 +1,5 @@
 ## Model all 5 way variable combinations
 
-# test
-y_vec = y16
-x_df = x16
-n_vars = 2
-interact_varname = "Educ"
-
 all_X_way <- function(y_vec, x_df, n_vars, interact_varname = NA) {
   
   index <- combn(x = c(1:ncol(x_df)), m = n_vars)
