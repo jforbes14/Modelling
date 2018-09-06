@@ -39,6 +39,7 @@ load("~/Documents/R/Data/Clean/tpp01.rda")
 
 colnames(abs2001)[which(colnames(abs2001) == "Electorate")] <- "Election_Division"
 colnames(abs2016)[which(colnames(abs2016) == "Electorate")] <- "Election_Division"
+tpp01$DivisionNm[which(tpp01$DivisionNm == "PROSPECT")] = "MCMAHON"
 tpp04$DivisionNm[which(tpp04$DivisionNm == "PROSPECT")] = "MCMAHON"
 tpp07$DivisionNm[which(tpp07$DivisionNm == "PROSPECT")] = "MCMAHON"
 
@@ -395,8 +396,8 @@ pc_tpp_01 <- tpp01 %>%
   select(DivisionNm, PartyAb, CalculationValue, Swing) %>% 
   rename(Election_Division = DivisionNm, Perc_LNP = CalculationValue) %>% 
   mutate(year = "2001") %>% 
-  right_join(abs_sc_z_all %>% filter(year == "2001"), by = c("Election_Division", "year")) %>% 
-  filter(!is.na(PartyAb))
+  full_join(abs_sc_z_all %>% filter(year == "2001"), by = c("Election_Division", "year"))
+  # we only have 140 electorates TPP, so the other 10 have NA
 
 pc_tpp <- rbind(pc_tpp_01, pc_tpp_04, pc_tpp_07, pc_tpp_10, pc_tpp_13, pc_tpp_16) %>% 
   mutate(Perc_LNP = as.numeric(Perc_LNP))
