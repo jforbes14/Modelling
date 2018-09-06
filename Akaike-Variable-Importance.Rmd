@@ -5,9 +5,13 @@ date: "30/08/2018"
 output: pdf_document
 ---
 
+This R markdown runs all possible (up to) 5 variable models, for each election. This uses *all_X_way_fn.R*. It then computes Akaike weights, and ranks variables by their importance using sum of Akaike weights.
+
+
 ```{r}
 library(tidyverse)
-load("~/Documents/R/Modelling/data/data_mod.rda")
+knitr::opts_knit(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
+load("./Clean-Data/data_mod.rda")
 ```
 
 # Determining variable importance using Akaike weights
@@ -104,40 +108,40 @@ fiveway_2001 <- all_X_way(y01, x01, n_vars = 5)
 #twoway_2001 <- all_X_way(y01, x01, n_vars = 2)
 #oneway_2001 <- all_X_way(y01, x01, n_vars = 1)
 
-save(fiveway_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2016.rda")
-save(fiveway_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2013.rda")
-save(fiveway_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2010.rda")
-save(fiveway_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2007.rda")
-save(fiveway_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2004.rda")
-save(fiveway_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2001.rda")
+save(fiveway_2016, file = "./Clean-Data/fiveway_2016.rda")
+save(fiveway_2013, file = "./Clean-Data/fiveway_2013.rda")
+save(fiveway_2010, file = "./Clean-Data/fiveway_2010.rda")
+save(fiveway_2007, file = "./Clean-Data/fiveway_2007.rda")
+save(fiveway_2004, file = "./Clean-Data/fiveway_2004.rda")
+save(fiveway_2001, file = "./Clean-Data/fiveway_2001.rda")
 
-#save(fourway_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2016.rda")
-#save(fourway_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2013.rda")
-#save(fourway_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2010.rda")
-#save(fourway_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2007.rda")
-#save(fourway_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2004.rda")
-#save(fourway_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2001.rda")
+#save(fourway_2016, file = "./Clean-Data/fourway_2016.rda")
+#save(fourway_2013, file = "./Clean-Data/fourway_2013.rda")
+#save(fourway_2010, file = "./Clean-Data/fourway_2010.rda")
+#save(fourway_2007, file = "./Clean-Data/fourway_2007.rda")
+#save(fourway_2004, file = "./Clean-Data/fourway_2004.rda")
+#save(fourway_2001, file = "./Clean-Data/fourway_2001.rda")
 
-#save(threeway_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2016.rda")
-#save(threeway_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2013.rda")
-#save(threeway_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2010.rda")
-#save(threeway_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2007.rda")
-#save(threeway_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2004.rda")
-#save(threeway_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2001.rda")
+#save(threeway_2016, file = "./Clean-Data/threeway_2016.rda")
+#save(threeway_2013, file = "./Clean-Data/threeway_2013.rda")
+#save(threeway_2010, file = "./Clean-Data/threeway_2010.rda")
+#save(threeway_2007, file = "./Clean-Data/threeway_2007.rda")
+#save(threeway_2004, file = "./Clean-Data/threeway_2004.rda")
+#save(threeway_2001, file = "./Clean-Data/threeway_2001.rda")
 
-#save(twoway_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2016.rda")
-#save(twoway_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2013.rda")
-#save(twoway_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2010.rda")
-#save(twoway_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2007.rda")
-#save(twoway_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2004.rda")
-#save(twoway_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2001.rda")
+#save(twoway_2016, file = "./Clean-Data/twoway_2016.rda")
+#save(twoway_2013, file = "./Clean-Data/twoway_2013.rda")
+#save(twoway_2010, file = "./Clean-Data/twoway_2010.rda")
+#save(twoway_2007, file = "./Clean-Data/twoway_2007.rda")
+#save(twoway_2004, file = "./Clean-Data/twoway_2004.rda")
+#save(twoway_2001, file = "./Clean-Data/twoway_2001.rda")
 
-#save(oneway_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2016.rda")
-#save(oneway_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2013.rda")
-#save(oneway_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2010.rda")
-#save(oneway_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2007.rda")
-#save(oneway_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2004.rda")
-#save(oneway_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2001.rda")
+#save(oneway_2016, file = "./Clean-Data/oneway_2016.rda")
+#save(oneway_2013, file = "./Clean-Data/oneway_2013.rda")
+#save(oneway_2010, file = "./Clean-Data/oneway_2010.rda")
+#save(oneway_2007, file = "./Clean-Data/oneway_2007.rda")
+#save(oneway_2004, file = "./Clean-Data/oneway_2004.rda")
+#save(oneway_2001, file = "./Clean-Data/oneway_2001.rda")
 ```
 
 
@@ -285,12 +289,12 @@ std_coef_2007 <- std_coef_fn(fiveway_2007)
 std_coef_2004 <- std_coef_fn(fiveway_2004)
 std_coef_2001 <- std_coef_fn(fiveway_2001)
 
-#save(std_coef_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2016.rda")
-save(std_coef_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2013.rda")
-save(std_coef_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2010.rda")
-save(std_coef_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2007.rda")
-save(std_coef_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2004.rda")
-save(std_coef_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2001.rda")
+#save(std_coef_2016, file = "./Clean-Data/std_coef_2016.rda")
+save(std_coef_2013, file = "./Clean-Data/std_coef_2013.rda")
+save(std_coef_2010, file = "./Clean-Data/std_coef_2010.rda")
+save(std_coef_2007, file = "./Clean-Data/std_coef_2007.rda")
+save(std_coef_2004, file = "./Clean-Data/std_coef_2004.rda")
+save(std_coef_2001, file = "./Clean-Data/std_coef_2001.rda")
 ```
 
 ```{r}
