@@ -15,7 +15,7 @@ library(ggplot2)
 
 ```{r loadandedit, include=FALSE}
 load("Clean-Data/pc_tpp.rda")
-load("/Users/Jeremy/Documents/R/Modelling/data/win_all.rda")
+#load("/Users/Jeremy/Documents/R/Data/Clean/fp_all.rda")
 ```
 
 
