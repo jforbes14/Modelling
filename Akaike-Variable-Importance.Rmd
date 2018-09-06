@@ -10,7 +10,7 @@ This R markdown runs all possible (up to) 5 variable models, for each election. 
 
 ```{r}
 library(tidyverse)
-knitr::opts_knit(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
+knitr::opts_knit$set(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
 load("./Clean-Data/data_mod.rda")
 ```
 
