@@ -7,8 +7,8 @@ output: html_document
 
 ```{r}
 library(tidyverse)
-load("~/Documents/R/Modelling/data/data_mod.rda")
-load("~/Documents/R/Modelling/data/sw_var_imp_all.rda")
+knitr::opts_knit(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
+load("./Clean-Data/data_mod.rda")
 
 ```
 

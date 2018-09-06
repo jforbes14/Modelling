@@ -95,7 +95,7 @@ fiveway_2004 <- all_X_way(y04, x04, n_vars = 5)
 
 
 # 2001
-data_mod01 <- data_mod %>% filter(year == "2001")
+data_mod01 <- data_mod %>% filter(year == "2001", !is.na(Perc_LNP))
 y01 <- data_mod01$Perc_LNP
 x01 <- data_mod01 %>% 
   dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 

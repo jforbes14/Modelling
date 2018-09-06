@@ -409,12 +409,10 @@ save(pc_tpp, file = "Clean-Data/pc_tpp.rda")
 pc_tpp %>% 
   mutate(Educ = Bachelor + HighSchool + Postgraduate + Professional + 
            Finance - Laborer - Tradesperson - DipCert,
- #        Multicultural = BornOverseas - AusCitizen,
          FamHouseSize = FamilyRatio + AverageHouseholdSize + Couple_WChild_House - 
            Couple_NoChild_House - SP_House + Age00_04 + Age05_14,
          PropertyMarr = Married + Owned + Mortgage - Renting - DiffAddress - 
            PublicHousing - DeFacto,
-         LFRet = LFParticipation - Age65_74 - Age75_84 - Age85plus,
          Incomes = MedianFamilyIncome + MedianHouseholdIncome + MedianPersonalIncome,
          RentLoan = MedianLoanPay + MedianRent
          ) %>% 
@@ -423,7 +421,7 @@ pc_tpp %>%
       #      BornOverseas, AusCitizen, 
             FamilyRatio, AverageHouseholdSize, Couple_WChild_House, Couple_NoChild_House, 
             SP_House, Age00_04, Age05_14, Married, Owned, Mortgage, Renting, DiffAddress, 
-            PublicHousing, DeFacto, Age65_74, Age75_84, Age85plus, LFParticipation, 
+            PublicHousing, DeFacto,
             MedianFamilyIncome, MedianHouseholdIncome, MedianPersonalIncome, MedianLoanPay,
             MedianRent,
             ends_with("NS"))) %>% 
@@ -433,15 +431,16 @@ pc_tpp %>%
 data_mod <- data_mod_unscaled %>% 
   mutate(Perc_LNP = as.character(Perc_LNP), Swing = as.character(Swing))
 
-for (i in 1:6) {
+for (j in seq(2001, 2016, by = 3)) {
+  j = as.character(j)
   
-  if (i == 1) {
-    data_mod[1:140, unlist(lapply(data_mod, is.numeric))] <- scale(data_mod[1:140, unlist(lapply(data_mod, is.numeric))], center = TRUE, scale = TRUE)
+  if (j == "2001") {
+    data_mod[which(data_mod$year == j), unlist(lapply(data_mod, is.numeric))] <- scale(data_mod[which(data_mod$year == j), unlist(lapply(data_mod, is.numeric))], center = TRUE, scale = TRUE)
   } else {
-  data_mod[(140 + 150*(i-2)+1):(140 + 150*(i-1)), unlist(lapply(data_mod, is.numeric))] <- scale(data_mod[(140 + 150*(i-2)+1):(140 + 150*(i-1)), unlist(lapply(data_mod, is.numeric))], center = TRUE, scale = TRUE) }
-  
+  data_mod[which(data_mod$year == j), unlist(lapply(data_mod, is.numeric))] <- scale(data_mod[which(data_mod$year == j), unlist(lapply(data_mod, is.numeric))], center = TRUE, scale = TRUE) }
 }
-
+  
+  
 data_mod <- data_mod %>% 
   mutate(Perc_LNP = as.numeric(Perc_LNP), Swing = as.numeric(Swing))
 
