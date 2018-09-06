@@ -1,0 +1,215 @@
+---
+title: "Path-using-PCA"
+author: "Jeremy Forbes"
+date: "08/08/2018"
+output: html_document
+---
+
+# Load and format
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warnings = FALSE)
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r loadandedit, include=FALSE}
+load("/Users/Jeremy/Documents/R/Modelling/data/pc_tpp.rda")
+load("/Users/Jeremy/Documents/R/Modelling/data/win_all.rda")
+
+```
+
+
+# Ellipses for majority support in PC1 and PC2 directions, for each election
+```{r}
+pc_tpp %>% 
+  ggplot(aes(x=PC1, y=PC2)) + 
+  geom_point(aes(col = Perc_LNP > 50, label = Election_Division), alpha = 0.4) + 
+  stat_ellipse(aes(col = Perc_LNP > 50), level = 0.95) + 
+  facet_wrap(~year)
+```
+The "zones" appealling to each party are consistent across years
+
+
+# Tracking PC movements when electorates change parties
+
+## LNP
+```{r}
+# Support LNP dummy
+pc_tpp %>% 
+  mutate(support_LNP = ifelse(Perc_LNP >= 50, 1, 0)) %>%
+  select(Election_Division, Perc_LNP, support_LNP,
+         PC1, PC2, PC3, PC4, year) %>% 
+  arrange(Election_Division, year) -> change_data
+
+# Support LNP lag and change dummy
+change_data$support_LNP_lag = c(NA, change_data$support_LNP[-890])
+
+change_data <- change_data %>% 
+  mutate(support_LNP_lag = ifelse(year == "2001", NA, support_LNP_lag),
+         change = abs(support_LNP - support_LNP_lag)) 
+
+# Support LNP next
+change_data$change_next = c(change_data$change[-1], NA)
+change_data <- change_data %>% 
+  mutate(change_next = ifelse(year == "2016", NA, change_next))
+
+# Label for ALP and LNP plots
+change_data <- change_data %>% 
+  mutate(support_LNP_next = ifelse(change_next == 1 & support_LNP == 0 | 
+                                     change_next == 0 & support_LNP == 1, 1, 0))
+
+# Create LNP data frame
+LNP_changes <- change_data %>% 
+  filter(support_LNP_next == 1 & change_next == 1| support_LNP == 1 & change == 1, 
+         !Election_Division %in% c("MAYO", "WRIGHT", "CALARE"))
+# Need to manually remove electorates that haven't been around all 6 years
+
+
+# LNP data frame for each year
+LNP_04 <- LNP_changes %>% 
+  filter(year == "2004" & change == 1 & support_LNP == 1 | year == "2001" & change_next == 1 & support_LNP == 0) %>% 
+  mutate(tag_year = "2004") %>% 
+  filter(!Election_Division %in% "BONNER")
+LNP_07 <- LNP_changes %>% 
+  filter(year == "2007" & change == 1 & support_LNP == 1 | year == "2004" & change_next == 1 & support_LNP == 0) %>% 
+  mutate(tag_year = "2007")
+LNP_10 <- LNP_changes %>% 
+  filter(year == "2010" & change == 1 & support_LNP == 1 | year == "2007" & change_next == 1 & support_LNP == 0) %>% 
+  mutate(tag_year = "2010")
+LNP_13 <- LNP_changes %>% 
+  filter(year == "2013" & change == 1 & support_LNP == 1 | year == "2010" & change_next == 1 & support_LNP == 0) %>% 
+  mutate(tag_year = "2013")
+LNP_16 <- LNP_changes %>% 
+  filter(year == "2016" & change == 1 & support_LNP == 1 | year == "2013" & change_next == 1 & support_LNP == 0) %>% 
+  mutate(tag_year = "2016")
+LNP_all <- rbind(LNP_04, LNP_07, LNP_10, LNP_13, LNP_16)
+
+LNP_all %>% 
+  ggplot(aes(x=PC1, y=PC2)) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  geom_vline(aes(xintercept = 0), alpha = 0.5) +
+  geom_point(aes(col = factor(support_LNP)), alpha = 0.5) + 
+  scale_color_manual(values = c("grey50", "blue")) + 
+  geom_path(aes(group = Election_Division), col = "blue", alpha = 0.5, arrow = arrow(length = unit(0.2, "cm")), size = 0.5) + 
+  facet_wrap(~tag_year)
+
+
+# Including all electorates in election year as a backdrop
+rbind(
+  pc_tpp %>% 
+  select(Election_Division, PC1, PC2, year) %>% 
+    mutate(support_LNP = "Other", tag_year = "Other") %>% 
+    filter(year != "2001"), 
+  LNP_all %>% 
+    select(Election_Division, PC1, PC2, support_LNP, tag_year) %>% 
+    mutate(year = tag_year)
+  ) %>% 
+  mutate(support_LNP = ifelse(support_LNP == 0, "ALP", 
+                              ifelse(support_LNP == 1, "LNP", "Other"))) %>% 
+  ggplot(aes(x=PC1, y=PC2)) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  geom_vline(aes(xintercept = 0), alpha = 0.5) +
+  geom_point(aes(col = factor(support_LNP), alpha = factor(support_LNP))) + scale_alpha_manual(values = c(0.5,0.7,0.1)) +
+  scale_color_manual(values = c("black", "blue", "grey50")) + 
+  geom_path(aes(group = Election_Division), col = "blue", alpha = 0.5, arrow = arrow(length = unit(0.2, "cm")), size = 0.5) + 
+  facet_wrap(~year) + theme_bw()
+```
+
+## Same for ALP
+```{r}
+# Create ALP data frame
+ALP_changes <- change_data %>% 
+  filter(support_LNP_next == 0 & change_next == 1| support_LNP == 0 & change == 1,
+         !Election_Division %in% c("FENNER", "FLYNN", "GORTON", "HUNTER", "NEWCASTLE"))
+# Need to manually remove electorates that haven't been around all 6 years
+
+
+# ALP data frame for each year
+ALP_04 <- ALP_changes %>% 
+  filter(year == "2004" & change == 1 & support_LNP == 0 | year == "2001" & change_next == 1 & support_LNP == 1) %>% 
+  mutate(tag_year = "2004")
+ALP_07 <- ALP_changes %>% 
+  filter(year == "2007" & change == 1 & support_LNP == 0 | year == "2004" & change_next == 1 & support_LNP == 1) %>% 
+  mutate(tag_year = "2007")
+ALP_10 <- ALP_changes %>% 
+  filter(year == "2010" & change == 1 & support_LNP == 0 | year == "2007" & change_next == 1 & support_LNP == 1) %>% 
+  mutate(tag_year = "2010")
+ALP_13 <- ALP_changes %>% 
+  filter(year == "2013" & change == 1 & support_LNP == 0 | year == "2010" & change_next == 1 & support_LNP == 1) %>% 
+  mutate(tag_year = "2013")
+ALP_16 <- ALP_changes %>% 
+  filter(year == "2016" & change == 1 & support_LNP == 0 | year == "2013" & change_next == 1 & support_LNP == 1) %>% 
+  mutate(tag_year = "2016")
+ALP_all <- rbind(ALP_04, ALP_07, ALP_10, ALP_13, ALP_16)
+
+ALP_all %>% 
+  ggplot(aes(x=PC1, y=PC2)) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  geom_vline(aes(xintercept = 0), alpha = 0.5) +
+  geom_point(aes(col = factor(support_LNP)), alpha = 0.5) + 
+  scale_color_manual(values = c("red","grey50")) + 
+  geom_path(aes(group = Election_Division), col = "red", alpha = 0.5, arrow = arrow(length = unit(0.2, "cm")), size = 0.5) + 
+  facet_wrap(~tag_year)
+
+
+# Including all electorates in election year as a backdrop
+rbind(
+  pc_tpp %>% 
+  select(Election_Division, PC1, PC2, year) %>% 
+    mutate(support_LNP = "Other", tag_year = "Other") %>% 
+    filter(year != "2001"), 
+  ALP_all %>% 
+    select(Election_Division, PC1, PC2, support_LNP, tag_year) %>% 
+    mutate(year = tag_year)
+  ) %>% 
+  mutate(support_LNP = ifelse(support_LNP == 0, "ALP", 
+                              ifelse(support_LNP == 1, "LNP", "Other"))) %>% 
+  ggplot(aes(x=PC1, y=PC2)) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  geom_vline(aes(xintercept = 0), alpha = 0.5) +
+  geom_point(aes(col = factor(support_LNP), alpha = factor(support_LNP))) + scale_alpha_manual(values = c(0.7,0.5,0.1)) +
+  scale_color_manual(values = c("red", "black", "grey50")) + 
+  geom_path(aes(group = Election_Division), col = "red", alpha = 0.5, arrow = arrow(length = unit(0.2, "cm")), size = 0.5) + 
+  facet_wrap(~year) + theme_bw()
+
+```
+
+
+# "Swing" electorates
+```{r}
+pc_tpp %>% 
+  mutate(support_LNP = ifelse(Perc_LNP >= 50, 1, 0)) %>% 
+  arrange(Election_Division, year) -> temp
+  
+temp$support_LNP_lag = c(NA, temp$support_LNP[-890])
+temp$PC1_lag = c(NA, temp$PC1[-890])
+temp$PC2_lag = c(NA, temp$PC2[-890])
+temp$PC3_lag = c(NA, temp$PC3[-890])
+temp$PC4_lag = c(NA, temp$PC4[-890])
+
+
+temp <- temp %>% 
+  mutate(support_LNP_lag = ifelse(year == "2001", NA, support_LNP_lag)) %>% 
+  select(Election_Division, Perc_LNP, support_LNP, support_LNP_lag,
+         PC1, PC2, PC3, PC4, PC1_lag, PC2_lag, PC3_lag, PC4_lag, year, Swing) %>% 
+  mutate(change = abs(support_LNP - support_LNP_lag),
+         PC1_dif = PC1 - PC1_lag, PC2_dif = PC2 - PC2_lag, 
+         PC3_dif = PC3 - PC3_lag, PC4_dif = PC4 - PC4_lag,
+         change_to_LNP = ifelse(change == 1 & support_LNP == 1, 1, 0),
+         change_to_ALP = ifelse(change == 1 & support_LNP == 0, 1, 0),
+         Swing = as.numeric(Swing)
+         )
+
+
+# Swing vote
+temp %>% 
+  filter(change == 1) %>% 
+  ggplot(aes(x=PC1, y=PC2)) + geom_point(aes(col = Swing), alpha = 0.3) + scale_color_gradient2(low = "Red", mid = "yellow", high = "Blue")
+
+temp %>% 
+  mutate(status = ifelse(change == 0, "None",
+                         ifelse(change_to_LNP == 1, "LNP", "ALP"))) %>% 
+  ggplot(aes(x=PC1, y=PC2)) + geom_point(aes(col = status), alpha = 0.4) + stat_ellipse(aes(col= status))
+```
+

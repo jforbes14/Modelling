@@ -1,0 +1,114 @@
+---
+title: "Policies at each election"
+output: html_notebook
+---
+
+
+### 2016
+Tax - LNP to cut corproate tax rate, and tax cut for highest income bracket. Labor supportive of tax cuts for small business, opposes the rest.
+- e
+
+Superannuation - LNP remove upper limits for super contributions. Labor introduce tax on income from assets.
+
+Health - LNP restoring some health funding, which Abbott previously cut. ALP indicated it would improve funding.
+
+Schools - LNP to restore some of the funding cut to schools. ALP promises of $37bn over 10 years.
+
+Climate change - ALP to cut emmission by 45% by 2030, and wants 50% of energy to be renewables. Expect extractive industries to be supporting LNP here.
+
+Housing affordability - LNP not to touch negative gearing. ALP wants to limit it on new houses, and cut capital gains discount. 
+
+Refugees - LNP sticking to 'stop the boats'. ALP sympathetic but supports regional processing.
+
+Education - 20% cut in per student subsidy pushed from 2016 to 2018, LNP were considering fee deregulation. ALP opposes fee regulation.
+- Big drop in support for LNP, but still overall supportive.
+
+Marriage equality - LNP plebiscite, ALP parliamentary free vote.
+
+https://www.theguardian.com/australia-news/2016/may/11/the-10-big-issues-of-election-2016-how-coalition-labor-and-greens-policies-compare
+
+## 2013
+
+Julia Gillard overthrown by Rudd
+
+Labor - emissions trading scheme, 
+
+Mining - Minerals Resource Rent Tax was implemented in 2012, LNP will scrap it. 
+
+Carbon tax - Came into effect 2012. LNP to repeal.
+
+Coal Seam Gas (fracking) - both LNP and ALP support under appropriate approvals. Same for Kimberley gas.
+
+Manufacturing - both LNP and ALP to support with funds to the industry, but ALP willing to supply $500m more.
+
+Competition - LNP pledge to reduce red tape costs by $1bn a year. 
+
+Income tax - ALP to reduce but conditional on carbon price, LNP without carbon tax. 
+
+Company tax - both reduce by 1.5% (LNP) and 2% (ALP)
+
+Superannuation - ALP increase super contribution tax on higher incomes, and cap contributions from older workers. LNP delayed raise in super guarantee rate (employer).
+
+http://www.abc.net.au/news/federal-election-2013/policy/
+
+## 2010
+
+Education - increase family benefits with students
+
+Immigration - both support offshore processing. ALP ruled out re-opening Nauru, LNP wants to.
+
+Health - similar
+
+Climate change - ALP commit to market based emissions reduction scheme (carbon tax), tighter standard for new coal fired power plants. LNP will not act on carbon pricing without world acting first. 
+
+Parental leave - 1.5% levy on big business to fund parental leave, up to 26 weeks. Labor 18 weeks paid at minimum wage.
+
+Internet - ALP $43bn NBN. LNP will scrap.
+
+Economy - ALP lower tax rate by 1%, LNP by 1.5%. LNP scrap Mineral Resource Rent Tax. ALP $5k rebate for small businesses. ALP major tax of 40% on super profits of major mineral companies. ALP Petroleum tax on all onshore oil and gas projects. *Effect of Extractive doubles* 
+
+
+
+http://www.abc.net.au/elections/federal/2010/policies/
+
+## 2007
+
+Kevin Rudd vs John Howard (inc.) wins 83-65
+
+Labor introduce greenhouse gas emission reduction target of 60% by 2050, ratifying the Kyoto protocol, and introduce a mandatory renewable energy target of 20% by 2020. LNP did not want to change the protocol, and set voluntary emission targets, and introduces a carbon emissions trading scheme by 2012.
+
+Labor pledged a $4.7bn broadband network.
+
+LNP offering income tax cuts, but ALP offered education and health tax rebates. 
+
+WorkChoices - had been implemented by LNP in 2005. ALP vow to strip, and did so. Workchoices had stripped many workers of award protection. Women were amongst the biggest losers.
+
+http://www.nswnma.asn.au/women-the-biggest-losers-under-workchoices/
+
+## 2004
+
+John Howard (inc.) vs Mark Latham LNP win 87 - 60.
+
+Drought continues to worsen. LNP to focus on regional and farmland water supply.
+
+Mining boom began in 2002. 
+
+Labor: increase bulk billing and imrpvoe public health system. Spread funding across education types. Tax cuts for lower income brackets. more benefits for retirees.
+
+Latham promises to slash funding to wealthy schools and distribute to less well off independent schools. 
+
+Mining boom: https://www.rba.gov.au/publications/bulletin/2014/dec/pdf/bu-1214-3.pdf
+
+
+## 2001
+
+John Howard (inc.) vs Kim Beazley. LNP win 82-65.
+
+Tampa affair: pre election, Howard refused permission for the MV Tampa carrying 400 Afghani refugees to enter Australian waters. Turned away to be processed in Nauru. This was very controversial. 
+
+September 11 attacks: overshadowed the Tampa affair.
+
+Swing of votes towards LNP following 9/11.
+
+https://en.wikipedia.org/wiki/Australian_federal_election,_2001
+

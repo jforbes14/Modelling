@@ -1,0 +1,363 @@
+---
+title: "Superset-Models"
+author: "Jeremy Forbes"
+date: "01/09/2018"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+load("~/Documents/R/Modelling/data/data_mod.rda")
+load("~/Documents/R/Modelling/data/sw_var_imp_all.rda")
+
+```
+
+# Supersets determined by Akaike weights
+
+Choosing the top 6 from each year, create a superset.
+
+```{r}
+# Top 6 variables
+superset_AW_vars <- var_imp_all %>% 
+  group_by(year) %>% 
+  top_n(n = 5, wt = sum_w) %>%
+  ungroup() %>% 
+  select(var, varname) %>% 
+  unique()
+
+superset_AW_by_year <- var_imp_all %>% 
+  group_by(year) %>% 
+  top_n(n = 5, wt = sum_w) %>% 
+  arrange(-sum_w) %>% 
+  mutate(imp = 1:5)
+
+```
+
+
+
+
+# Supersets determined by Standardized Coefficients
+
+Choosing the top 6 from each year, create a superset.
+
+```{r}
+# Top 6 variables
+superset_SC_vars <- std_coef_all %>% 
+  group_by(year) %>% 
+  top_n(n = 5, wt = abs(avg_coef)) %>%
+  ungroup() %>% 
+  select(var, varname) %>% 
+  group_by(varname) %>% 
+  count(n = n())
+
+superset_SC_by_year <- std_coef_all %>% 
+  group_by(year) %>% 
+  top_n(n = 5, wt = abs(avg_coef)) %>% 
+  select(var, avg_coef, varname, year) %>% 
+  arrange(-abs(avg_coef)) %>% 
+  mutate(imp = 1:5)
+```
+
+# Creating the super-set
+Added Incomes and OtherLanguageHome
+
+```{r}
+superset <- superset_AW_vars
+superset[11:12, 1] <- c(20, 27)
+superset[11:12, 2] <- c("OtherLanguageHome", "Incomes")
+```
+
+
+
+Run a regression each year using this superset
+
+```{r}
+fit_ss_16 <- lm(Perc_LNP ~ ., 
+                data = data_mod %>% 
+                  filter(year == "2016") %>% 
+#                  select(-c(year, Swing, Election_Division)) %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_13 <- lm(Perc_LNP ~ ., 
+                data = data_mod %>% 
+                  filter(year == "2013") %>% 
+#                  select(-c(year, Swing, Election_Division)) %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_10 <- lm(Perc_LNP ~ ., 
+                data = data_mod %>% 
+                  filter(year == "2010") %>% 
+#                  select(-c(year, Swing, Election_Division)) %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_07 <- lm(Perc_LNP ~ ., 
+                data = data_mod %>% 
+                  filter(year == "2007") %>% 
+ #                 select(-c(year, Swing, Election_Division)) %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_04 <- lm(Perc_LNP ~ ., 
+                data = data_mod %>% 
+                  filter(year == "2004") %>% 
+ #                 select(-c(year, Swing, Election_Division)) %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_01 <- lm(Perc_LNP ~ ., 
+                data = data_mod %>% 
+                  filter(year == "2001") %>% 
+ #                 select(-c(year, Swing, Election_Division)) %>% 
+                  select(Perc_LNP, (superset$varname %>% as.character)))
+
+# Extracting coefficients
+ss_AW_coef = data.frame(varname = names(fit_ss_01$coefficients),
+                     year = as.character(rep(seq(2001, 2016, by = 3), 
+                                             each = length(names(fit_ss_01$coefficients)))),
+                     coef =
+                       c(fit_ss_01$coefficients, 
+                         fit_ss_04$coefficients, 
+                         fit_ss_07$coefficients, 
+                         fit_ss_10$coefficients, 
+                         fit_ss_13$coefficients, 
+                         fit_ss_16$coefficients))
+
+# Plot
+ss_AW_coef %>% 
+  filter(varname != "(Intercept)") %>% 
+  ggplot(aes(x=varname, y=coef)) +
+  geom_point(aes(col = year), size = 2.5, alpha = 0.8) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+
+# R2 of models
+summary(fit_ss_01)$r.squared
+summary(fit_ss_04)$r.squared
+summary(fit_ss_07)$r.squared
+summary(fit_ss_10)$r.squared
+summary(fit_ss_13)$r.squared
+summary(fit_ss_16)$r.squared
+```
+
+# Plotting coefficients over time
+```{r}
+## Create df of coefficients
+library(broom)
+all_coefs <- bind_rows(tidy(fit_ss_16) %>% mutate(year = "2016"), 
+                       tidy(fit_ss_13) %>% mutate(year = "2013"), 
+                       tidy(fit_ss_10) %>% mutate(year = "2010"), 
+                       tidy(fit_ss_07) %>% mutate(year = "2007"), 
+                       tidy(fit_ss_04) %>% mutate(year = "2004"), 
+                       tidy(fit_ss_01) %>% mutate(year = "2001"))
+
+# Plot
+all_coefs %>% 
+  filter(term != "(Intercept)") %>% 
+  ggplot(aes(x = year, y = estimate)) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  geom_line() + 
+  facet_wrap(~term)
+
+## Voting against unemployed
+data_mod %>% ggplot(aes(x = Unemployed, y = Perc_LNP)) + geom_point() + facet_wrap(~year)
+  geom_line(aes(group = Election_Division, label = Election_Division))
+
+data_mod %>% filter(Perc_LNP > 55) %>% ggplot(aes(x = year, y = Unemployed)) + geom_line(aes(group = Election_Division, label = Election_Division))
+```
+
+# Checking which are significant (F test)
+```{r}
+all_sig <- bind_rows(tidy(drop1(fit_ss_01, test = "F")) %>% mutate(year = "2001"),
+                     tidy(drop1(fit_ss_04, test = "F")) %>% mutate(year = "2004"),
+                     tidy(drop1(fit_ss_07, test = "F")) %>% mutate(year = "2007"),
+                     tidy(drop1(fit_ss_10, test = "F")) %>% mutate(year = "2010"),
+                     tidy(drop1(fit_ss_13, test = "F")) %>% mutate(year = "2013"),
+                     tidy(drop1(fit_ss_16, test = "F")) %>% mutate(year = "2016")) %>% 
+  rename(pval_F = p.value) %>% select(term, pval_F, year)
+
+all_coefs_sig <- left_join(all_coefs, all_sig, by = c("term", "year"))                   
+
+# Plot
+all_coefs_sig %>% 
+  filter(term != "(Intercept)") %>% 
+  ggplot(aes(x = year, y = estimate)) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  geom_line(aes(group = term)) + 
+  geom_point(aes(col = (pval_F < 0.05))) + 
+  scale_color_manual(values = c("grey50", "magenta")) + 
+  facet_wrap(~term)
+```
+
+# Confirm that these match our initial thoughts
+
+
+```{r}
+## Voting against Born_SE_Europe
+data_mod %>% ggplot(aes(x = Born_SE_Europe, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+## Voting against Born_UK
+data_mod %>% ggplot(aes(x = Born_UK, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+  
+## Voting against CurrentlyStudying
+data_mod %>% ggplot(aes(x = CurrentlyStudying, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+      
+## Voting against Educ
+data_mod %>% ggplot(aes(x = Educ, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+  
+## Voting against Extractive
+data_mod %>% ggplot(aes(x = Extractive, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+  
+## Voting against Incomes
+data_mod %>% ggplot(aes(x = Incomes, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+## Voting against LFRet
+data_mod %>% ggplot(aes(x = LFRet, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+## Voting against ManagerAdminClericalSales
+data_mod %>% ggplot(aes(x = ManagerAdminClericalSales, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+## Voting against NoReligion
+data_mod %>% ggplot(aes(x = NoReligion, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+## Voting against OneParent_House
+data_mod %>% ggplot(aes(x = OneParent_House, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+## Voting against OtherLanguageHome
+data_mod %>% ggplot(aes(x = OtherLanguageHome, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+## Voting against RentLoan
+data_mod %>% ggplot(aes(x = RentLoan, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+
+
+data_mod %>% filter(Perc_LNP > 55) %>% ggplot(aes(x = year, y = Unemployed)) + geom_line(aes(group = Election_Division, label = Election_Division))
+```
+
+Born_SE_Europe: Each year, electorates with higher proportions of people born in South and Eastern Europe are  more attracted to the Labor party. This fits with our initial inspection of the data.
+
+Born_UK: In only the 2007 and 2010 elections, proportion of people born in the UK was significantly influential in electorate preference, with higher proportions being more associated with the Liberal party. The sign of the relationship does not change over the elections.
+
+CurrentlyStudying: This result contradicts our expectations entirely, as we expected electorates with larger student demographics to have more affiliation with the Labor party. 
+
+Educ: We expected areas with higher education levels to support Labor, which is the effect produced by the models. Throughout 2004-2013, this effect was particularly strong.
+
+Extractive: Electorates with more jobs in agriculture, mining, electricity, gas, water or waste, are strongly affiliated with the coalition. We see a huge spike in effect in 2010, which corresponds with the peak of the mining boom. The consistently strong levels of support are rational, because the Liberal party has policies that favour these industries. 
+
+Incomes: Areas with higher incomes should have a preference for the Liberal party, due to their tax policies being lighter on higher income brackets. We see that in 2001-2007, higher income areas were particularly strong in their support for the Liberal party, but from 2010, this positive effect has weakened.
+
+LFRet: Matches - to be removed.
+
+ManagerAdminClericalSales: Matches
+
+NoReligion: No relationship appears in basic plots, but we expect electorates with more identifying athiests to be more associated with the Labor party, as it is seen as being more socially progressive. We find that from 2010 onwards, this became apparent. What changed in atheist attitudes over time?
+
+OneParent_House: We expect areas with higher proportions of single parent families to be more supportive of Labor. Labor's policies usually are geared towards family benefits and related issues that would be important for areas with high incidence of single parent families. The model shows a consistently strong relationship with Labor support over the years.
+
+OtherLanguageHome: We don't expect this to have any significant effect on two party preferred vote, and the model confirms this. There is only a weak affiliation with the Liberal party, although not significant. Original plots indicate that we should see support for Labor.
+
+RentLoan: Labor policy in 2007 triggered increase in support for Labor, which changed drastically in 2010 - perhaps something to do with negative gearing?
+
+
+
+
+
+
+
+
+## How coefficients change when we drop a variable
+If the coefficient changes significantly, then there is some dependency
+```{r}
+drop_var <- function(fit) {
+  dat <- fit$model
+for (j in 2:ncol(dat)) {
+  omitted_name <- names(dat)[j]
+  dat_mod <- dat[, -j]
+  mod <- lm(Perc_LNP ~ ., data = dat_mod)
+  mod_out <- tidy(mod) %>% 
+    mutate(omitted_var = omitted_name) %>% 
+    left_join(tidy(fit) %>% select(term, estimate) %>% rename(full_estimate = estimate), by = "term") %>% 
+    mutate(diff_estimate = full_estimate - estimate)
+  
+  if (j == 2) {
+    mod_all <- mod_out
+  } else {
+    mod_all <- rbind(mod_all, mod_out)
+  }
+  
+    
+}
+  
+  mod_all <- mod_all %>% 
+    arrange(-abs(diff_estimate)) %>% 
+    filter(term != "(Intercept)")
+  
+  return(mod_all)
+}
+
+
+change_coef_16 <- drop_var(fit_ss_16) %>% mutate(year = "2016")
+change_coef_13 <- drop_var(fit_ss_13) %>% mutate(year = "2013")
+change_coef_10 <- drop_var(fit_ss_10) %>% mutate(year = "2010")
+change_coef_07 <- drop_var(fit_ss_07) %>% mutate(year = "2007")
+change_coef_04 <- drop_var(fit_ss_04) %>% mutate(year = "2004")
+change_coef_01 <- drop_var(fit_ss_01) %>% mutate(year = "2001")
+
+bind_rows(change_coef_16, change_coef_13, change_coef_10, change_coef_07, change_coef_04, change_coef_01) %>% 
+  arrange(-abs(diff_estimate)) %>% View
+
+```
+
+
+
+## Comparison with single variable regressions
+```{r}
+onevar_coef <- rbind(oneway_2001 %>% unnest %>% select(vars, coef) %>% mutate(year = "2001"),
+                     oneway_2004 %>% unnest %>% select(vars, coef) %>% mutate(year = "2004"),
+                     oneway_2007 %>% unnest %>% select(vars, coef) %>% mutate(year = "2007"),
+                     oneway_2010 %>% unnest %>% select(vars, coef) %>% mutate(year = "2010"),
+                     oneway_2013 %>% unnest %>% select(vars, coef) %>% mutate(year = "2013"),
+                     oneway_2016 %>% unnest %>% select(vars, coef) %>% mutate(year = "2016")) %>% 
+  rename(var = vars) %>% 
+  left_join(name_vars, by = "var") %>% mutate(Type = "SingleVarReg") %>% select(-var)
+
+rbind(onevar_coef, ss_AW_coef %>% mutate(Type = "SupersetAW")) %>% 
+  filter(varname != "(Intercept)", varname %in% ss_AW_coef$varname) %>% 
+  ggplot(aes(x = varname, y = coef)) + 
+  geom_line(aes(group = varname)) + 
+  geom_point(aes(col = Type)) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + facet_wrap(~year)
+```
+
+We compare the standardized coefficients from the superset model to those from the single variable regressions to demonstrate the problem of drawing insights from single variable regressions. Single variable regressions are used in previous sociodemographic analyses of Australian federal elections (@StimsonALLPAPERS), but no extensions to include multiple regressors have been previously explored.
+
+In at least one election year, we find that single variable regressions estimate the effects of CurrentlyStudying, NoReligion, Transformative, MedianAge and RentLoan to have mistaken party associations. CurrentlyStudying, RentLoan and Transfomrative would be estimated to have a positive relationships with support for Labor, but once we have appropriately adjusted for other factors (in multiple regression), the relationship moves in support of Liberal. Conversely, higher NoReligion and MedianAge would be said to support Liberal, but adjusting for other factors, either support Labor or are insignificant.
+
+
+## Effect over time
+
+```{r}
+# Split over two plots
+ss_AW_coef %>% 
+  filter(varname != "(Intercept)") %>% 
+  filter(varname %in% unique(ss_AW_coef$varname)[1:7]) %>% 
+  ggplot(aes(x = as.numeric(year), y = coef)) + geom_point(aes(col = varname)) + geom_line(aes(col=varname))
+
+ss_AW_coef %>% 
+  filter(varname != "(Intercept)") %>% 
+  filter(!varname %in% unique(ss_AW_coef$varname)[1:7]) %>% 
+  ggplot(aes(x = as.numeric(year), y = coef)) + geom_point(aes(col = varname)) + geom_line(aes(col=varname))
+```
+
+**Unchanging**
+Born_SE_Europe: Consistenty strong labor support, although effect has slightly reduced over the years.
+ManagerClericalAdminSales: Always strong support for Liberal. Small peak in 2007. Drop in 2010 and on upwards trend.
+Education: relatively insignificant, unchanged over years. 
+Christians other than Anglican and Catholic: spike for Liberal support in 2010
+
+**More Changes**
+OneParent_House: Consistent labor support, but dropped in 2010. Increased again 2013, 2016.
+LFRet: 2001 was insignificant, but has become more supportive of Labor. *Superannuation reform*
+Extractive: Always been highly supportive of Liberal. Huge spike in 2010, slight drop in 2013 and fixed 2016. *Mining boom* finished in 2011, and peaked in ???.
+RentLoan: Little or no effect before 2010, when support spiked for Liberal. Has held here over past two elections.
+BornUK: Spike in 2007, steady downwards trend afterwards.
+CurrentlyStudying: Initially supportive of Labor, but steep upwards trend towards Liberal over 2004-2010. Drop over last elecitons.
+MedianAge: Liberal in 2004, Labor 2007, Liberal 2010, then strong movements towards Labor.
+NoReligion: Always more associated with Labor. 2010 election big spike towards Labor. Now moving back towards zero - but this could also be due to more people identifying as Labor.
+Transformative: Spike for Liberal in 2004, drop in 2007, steady increase since.

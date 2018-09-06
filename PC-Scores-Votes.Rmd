@@ -1,0 +1,446 @@
+---
+title: "PC Scores for each election"
+author: "Jeremy Forbes"
+date: "10/08/2018"
+output: pdf_document
+---
+
+This uses the CED imputations, not POA.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warnings = FALSE)
+library(tidyverse)
+library(ggplot2)
+library(visreg)
+library(broom)
+```
+
+
+```{r loadandedit, include=FALSE}
+load("~/Documents/R/ABS/Clean-ABS/data/abs2001.rda")
+load("~/Documents/R/ABS/Clean-ABS/data/abs2016.rda")
+load("~/Documents/R/ABS/Clean-ABS/data/sd2004.rda")
+load("~/Documents/R/ABS/Clean-ABS/data/sd2007.rda")
+load("~/Documents/R/ABS/Clean-ABS/data/sd2010.rda")
+load("~/Documents/R/ABS/Clean-ABS/data/sd2013.rda")
+load("~/Documents/R/AEC/data/tpp16.rda")
+load("~/Documents/R/AEC/data/tpp13.rda")
+load("~/Documents/R/AEC/data/tpp10.rda")
+load("~/Documents/R/AEC/data/tpp07.rda")
+load("~/Documents/R/AEC/data/tpp04.rda")
+load("~/Documents/R/AEC/data/tpp01.rda")
+
+colnames(abs2001)[which(colnames(abs2001) == "Electorate")] <- "Election_Division"
+colnames(abs2016)[which(colnames(abs2016) == "Electorate")] <- "Election_Division"
+tpp04$DivisionNm[which(tpp04$DivisionNm == "PROSPECT")] = "MCMAHON"
+tpp07$DivisionNm[which(tpp07$DivisionNm == "PROSPECT")] = "MCMAHON"
+
+abs2016 <- abs2016[ , order(names(abs2016))]
+
+
+```
+
+
+## Functions
+```{r functions}
+# PCA after stripping non numerics
+doPC <- function(abs) {
+  abs.x <- abs[,!endsWith(colnames(abs), "NS")] %>%
+    select(-c(Election_Division, Population, Area, OtherLanguageHome, InternetUse, EmuneratedElsewhere, Volunteer, InternetAccess))
+
+  if ("State" %in% colnames(abs)) {
+  abs.x <- abs.x %>%
+    select(-c(ID, State))
+  }
+  
+    if ("year" %in% colnames(abs)) {
+  abs.x <- abs.x %>%
+    select(-year)
+  }
+  
+  pc <- prcomp(abs.x, scale = TRUE, center = TRUE)
+  
+  return(pc)
+}
+
+# Projection onto PCs
+project <- function(abs, PCs, res) {
+  
+  # Format to ensure upper case names
+
+  abs$Election_Division <- toupper(abs$Election_Division)
+
+abs.x <- abs[,!endsWith(colnames(abs), "NS")] %>%
+  select(-c(Election_Division, Population, Area, OtherLanguageHome, InternetUse, EmuneratedElsewhere, Volunteer, InternetAccess))
+
+if ("State" %in% colnames(abs)) {
+  abs.x <- abs.x %>%
+    select(-c(ID, State))
+}
+
+if ("year" %in% colnames(abs)) {
+  abs.x <- abs.x %>%
+    select(-year)
+}
+
+proj1 <- scale(as.matrix(abs.x[,])) %*% as.matrix(PCs[,1])
+proj2 <- scale(as.matrix(abs.x[,])) %*% as.matrix(PCs[,2])
+proj3 <- scale(as.matrix(abs.x[,])) %*% as.matrix(PCs[,3])
+proj4 <- scale(as.matrix(abs.x[,])) %*% as.matrix(PCs[,4])
+proj5 <- scale(as.matrix(abs.x[,])) %*% as.matrix(PCs[,5])
+proj6 <- scale(as.matrix(abs.x[,])) %*% as.matrix(PCs[,6])
+proj7 <- scale(as.matrix(abs.x[,])) %*% as.matrix(PCs[,7])
+proj8 <- scale(as.matrix(abs.x[,])) %*% as.matrix(PCs[,8])
+proj9 <- scale(as.matrix(abs.x[,])) %*% as.matrix(PCs[,9])
+proj10 <- scale(as.matrix(abs.x[,])) %*% as.matrix(PCs[,10])
+
+if (is.na(res) == FALSE){
+   # Upper case names
+   res$DivisionNm <- toupper(res$DivisionNm)
+   
+  vis <- data.frame(z1 = proj1, z2 = proj2, Election_Division = abs$Election_Division)
+  vis <- merge(x = vis, y = select(res, c(DivisionNm, Result)), by.x = "Election_Division", by.y = "DivisionNm")
+} else {
+  vis <- data.frame(PC1 = proj1, PC2 = proj2, PC3 = proj3, PC4 = proj4,
+                    PC5 = proj5, PC6 = proj6, PC7 = proj7, PC8 = proj8,
+                    PC9 = proj9, PC10 = proj10)
+}
+
+return(vis)
+
+}
+
+# Orient PCs to have common directions
+orientPCs <- function(pc) {
+  
+  PC1 = pc$rotation[order(names(pc$rotation[,1])),1]
+  if (PC1[which(names(PC1) == "HighSchool")] < 0) {
+    PC1 = -PC1
+  }
+  
+  PC2 = pc$rotation[order(names(pc$rotation[,1])),2]
+  if (PC2[which(names(PC2) == "FamilyRatio")] < 0) {
+    PC2 = -PC2
+  }
+  
+  PC3 = pc$rotation[order(names(pc$rotation[,1])),3]
+  if (PC3[which(names(PC3) == "Owned")] > 0) {
+    PC3 = -PC3
+  }
+
+  PC4 = pc$rotation[order(names(pc$rotation[,1])),4]
+  if (PC4[which(names(PC4) == "LFParticipation")] < 0) {
+    PC4 = -PC4
+  }
+  
+  pc_oriented <- cbind(PC1,PC2,PC3,PC4)
+  
+  return(pc_oriented)
+}
+
+
+scale_centre <- function(abs) {
+  abs.x <- abs[,] %>%
+  select(-c(Election_Division, Population, Area))
+
+if ("State" %in% colnames(abs)) {
+  abs.x <- abs.x %>%
+    select(-c(ID, State))
+}
+
+if ("year" %in% colnames(abs)) {
+  abs.x <- abs.x %>%
+    select(-year)
+}
+  
+  scaled_and_centered = scale(abs.x, center = TRUE, scale = TRUE) %>% 
+    cbind(abs %>% select(c(Election_Division, Population, Area)))
+  
+  if ("State" %in% colnames(abs)) {
+  scaled_and_centered <- scaled_and_centered %>%
+    cbind(abs %>% select(ID, State))
+}
+
+if ("year" %in% colnames(abs)) {
+  scaled_and_centered <- scaled_and_centered %>%
+    cbind(abs %>% select(year))
+}
+  
+  return(scaled_and_centered)
+}
+
+
+```
+
+
+Determining PC directions for all elections, and showing they have common loadings
+
+```{r}
+# PCs for each year
+pc01 <- doPC(abs2001)
+pc04 <- doPC(sd2004)
+pc07 <- doPC(sd2007)
+pc10 <- doPC(sd2010)
+pc13 <- doPC(sd2013)
+pc16 <- doPC(abs2016)
+
+# Proportion of variance explained - approximately 50%
+pve01 <- data.frame(PC = 1:nrow(pc01$rotation), PVE = ((pc01$sdev)^2/sum((pc01$sdev)^2)), year = "2001") %>% mutate(TVE = cumsum(PVE))
+pve04 <- data.frame(PC = 1:nrow(pc04$rotation), PVE = ((pc04$sdev)^2/sum((pc04$sdev)^2)), year = "2004") %>% mutate(TVE = cumsum(PVE))
+pve07 <- data.frame(PC = 1:nrow(pc07$rotation), PVE = ((pc07$sdev)^2/sum((pc07$sdev)^2)), year = "2007") %>% mutate(TVE = cumsum(PVE))
+pve10 <- data.frame(PC = 1:nrow(pc10$rotation), PVE = ((pc10$sdev)^2/sum((pc10$sdev)^2)), year = "2010") %>% mutate(TVE = cumsum(PVE))
+pve13 <- data.frame(PC = 1:nrow(pc13$rotation), PVE = ((pc13$sdev)^2/sum((pc13$sdev)^2)), year = "2013") %>% mutate(TVE = cumsum(PVE))
+pve16 <- data.frame(PC = 1:nrow(pc16$rotation), PVE = ((pc16$sdev)^2/sum((pc16$sdev)^2)), year = "2016") %>% mutate(TVE = cumsum(PVE))
+pve_all <- rbind(pve01, pve04, pve07, pve10, pve13, pve16)
+
+# Proportion of variance explained across years
+pve_all %>%  ggplot(aes(x=PC, y=PVE)) + geom_line(aes(col = year)) + lims(x=c(0,20)) +
+  geom_point(col = "grey50") + labs(x="Number of PCs used", y="Cumulative proportion of variance explained")
+
+
+# Total variance explained across years
+pve_all %>% 
+  ggplot(aes(x=PC, y=TVE)) + geom_line(aes(col = year)) + lims(x=c(0,20), y=c(0,1)) +
+  geom_point(aes(col = year)) + labs(x="Number of PCs used", y="Cumulative proportion of variance explained")
+
+# Visualising loadings
+vis_loadings <- rbind(
+  orientPCs(pc01) %>% as.data.frame() %>% rownames_to_column(var = "metric") %>% mutate(year = "2001"),
+  orientPCs(pc04) %>% as.data.frame() %>% rownames_to_column(var = "metric") %>% mutate(year = "2004"),
+  orientPCs(pc07) %>% as.data.frame() %>% rownames_to_column(var = "metric") %>% mutate(year = "2007"),
+  orientPCs(pc10) %>% as.data.frame() %>% rownames_to_column(var = "metric") %>% mutate(year = "2010"),
+  orientPCs(pc13) %>% as.data.frame() %>% rownames_to_column(var = "metric") %>% mutate(year = "2013"),
+  orientPCs(pc16) %>% as.data.frame() %>% rownames_to_column(var = "metric") %>% mutate(year = "2016")
+) %>% mutate(
+  important1 = metric %in% c("HighSchool", "Bachelor", "Postgraduate", "Finance", "AusCitizen", "BornOverseas", "Tradesperson", "Laborer", "Professional", "MedianFamilyIncome", "MedianPersonalIncome", "MedianHouseholdIncome", "MedianRent", "MedianLoanPay"),
+  important2 = metric %in% c("Couple_NoChild_House", "Couple_WChild_House", "SP_House", "FamilyRatio", "AverageHouseholdSize"),
+  important3 = metric %in% c("Owned", "Renting", "PublicHousing", "Married", "DeFacto", "DiffAddress"),
+  important4 = metric %in% c("Age85plus", "Age75_84", "LFParticipation", "Unemployment")
+    )
+  
+# PC1
+vis_loadings %>% 
+  ggplot(aes(x=reorder(metric,-PC1), y=PC1)) + geom_line(aes(col = important1, size = important1)) +
+  geom_point(col = "cyan", size = 0.6, alpha = 0.4) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 6))
+
+# PC2
+vis_loadings %>% 
+  ggplot(aes(x=reorder(metric,-PC2), y=PC2)) + geom_line(aes(col = important2, size = important2)) +
+  geom_point(col = "cyan", size = 0.6, alpha = 0.4) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 6))
+
+# PC3
+vis_loadings %>% 
+  ggplot(aes(x=reorder(metric,-PC3), y=PC3)) + geom_line(aes(col = important3, size = important3)) +
+  geom_point(col = "cyan", size = 0.6, alpha = 0.4) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 6))
+
+# PC4
+vis_loadings %>% 
+  ggplot(aes(x=reorder(metric,-PC4), y=PC4)) + geom_line(aes(col = important4, size = important4)) +
+  geom_point(col = "cyan", size = 0.6, alpha = 0.4) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 6))
+```
+
+## Proportion of variance explained
+We see that when PCA is executed on each year individually, there is a large drop in the proportion of variance explained by each component after the fourth component. This indicates a structural break, and we would be justified in extracting just the first four components, as they explain approximately 75% of the variation in each of the years.
+
+## Common loadings
+The loadings on each of the first two principal components appear to be relatively similar across years. The first principal component commonly relates to higher incomes, higher education, and more multiculturalism. We see this in the consistently large loadings (around 0.2 or higher) for variables relating to levels of education, income amount and proportion of Australians citizens. The second component is predominantly influenced by household structure, with large loadings for variables relating to household size and make up. Our interpretation of the second component is that is represents larger families and households.
+
+Applying this same interpretation to the third and fourth components can be done, but the patterns of loadings vary more across years. Higher incidence of house ownership and marriage are associated with the third component, and higher labor force participation with less retirees is assocated with the fourth.
+
+## PCA on the combined set
+We have seen that the Census profiles each year independently yield reasonably consistent principal components, so the decision is made to apply PCA to a dataset containing the combined set of profiles. This allows us to use principal component regression to build a longitudinal model for the two party preferred vote.
+
+Each years' Census profiles are scaled and centred before combining. This way differences in electorate socio-demographics will be be measured relative to that election year. Otherwise, country-wide trends over time will distort comparison. For example, rental prices have increased over time, even after adjusting for inflation, so if rental prices are not standardized each year, then 2016 prices in a relatively cheap electorate will appear comparable with an expensive electorate by 2001 prices.
+
+
+# Doing PCA on combined set
+Now do PCA on all elections combined. Project z-scores (1-4) and attach to LNP and ALP electorates
+```{r}
+# Holding all the profiles
+abs_all <- rbind(
+  abs2001 %>% select(-c(State, ID)) %>% mutate(year = "2001"), 
+  sd2004 %>% mutate(year = "2004"), 
+  sd2007 %>% mutate(year = "2007"), 
+  sd2010 %>% mutate(year = "2010"), 
+  sd2013 %>% mutate(year = "2013"), 
+  abs2016 %>% select(-c(State, ID)) %>% mutate(year = "2016")
+)
+
+# Scaled and centred profiles for each year before combining
+abs_all_sc <- rbind(
+  scale_centre(abs2001 %>% select(-c(State, ID)) %>% mutate(year = "2001")), 
+  scale_centre(sd2004 %>% mutate(year = "2004")), 
+  scale_centre(sd2007 %>% mutate(year = "2007")), 
+  scale_centre(sd2010 %>% mutate(year = "2010")), 
+  scale_centre(sd2013 %>% mutate(year = "2013")), 
+  scale_centre(abs2016 %>% select(-c(State, ID)) %>% mutate(year = "2016"))
+)
+
+# PCA on all
+pc_all <- doPC(abs_all_sc)
+
+# Proportion of variance explained
+pve_all <- data.frame(PC = 1:nrow(pc_all$rotation), PVE = ((pc_all$sdev)^2/sum((pc_all$sdev)^2)), year = "all") %>% mutate(TVE = cumsum(PVE))
+pve_all %>%
+  ggplot(aes(x=PC, y=PVE)) + geom_line(col = "blue") + geom_point() + labs(x = "PC", y = "Proportion of Variance Explained")
+pve_all %>%
+  ggplot(aes(x=PC, y=TVE)) + geom_line(col = "blue") + geom_point() + labs(x = "PC", y = "Cumulative Proportion of Variance Explained")
+
+# Project onto electorates in all years
+z_all <- project(abs_all_sc, pc_all$rotation[,1:10], NA)
+
+# Add to combined census profiles
+abs_z_all <- cbind(abs_all,z_all)
+abs_sc_z_all <- cbind(abs_all_sc, z_all)
+
+# Format eletorate names
+abs_z_all$Election_Division <- toupper(abs_z_all$Election_Division)
+abs_z_all$Election_Division[which(abs_z_all$Election_Division == "PROSPECT")] = "MCMAHON"
+
+abs_sc_z_all$Election_Division <- toupper(abs_sc_z_all$Election_Division)
+abs_sc_z_all$Election_Division[which(abs_sc_z_all$Election_Division == "PROSPECT")] = "MCMAHON"
+```
+When PCA is run on the combined (standardized) dataset, the first four PCs explain 72.31% of the total variation. We see that the fifth PC contributes significantly less than the fourth, so we will use only these four PCs in subsequent models.
+
+Interpreting PCs
+```{r}
+pc_all_interpret <- orientPCs(pc_all) %>% as.data.frame() %>% rownames_to_column(var = "metric")
+
+#PC1
+pc_all_interpret %>% 
+  gather(key = PC, value = Loading, -metric) %>% 
+  filter(PC == "PC1") %>% 
+  filter(abs(Loading) > 0.15) %>% 
+  ggplot(aes(x=reorder(metric,-Loading), y=Loading)) + 
+  geom_point(col = "blue", size = 1, alpha = 0.4) + theme(axis.text.x = element_text(angle = 60, hjust=1, size = 7))
+
+#PC2
+pc_all_interpret %>% 
+  gather(key = PC, value = Loading, -metric) %>% 
+  filter(PC == "PC2") %>% 
+  filter(abs(Loading) > 0.15) %>% 
+  ggplot(aes(x=reorder(metric,-Loading), y=Loading)) + 
+  geom_point(col = "blue", size = 1, alpha = 0.4) + theme(axis.text.x = element_text(angle = 60, hjust=1, size = 7))
+
+#PC3
+pc_all_interpret %>% 
+  gather(key = PC, value = Loading, -metric) %>% 
+  filter(PC == "PC3") %>% 
+  filter(abs(Loading) > 0.15) %>% 
+  ggplot(aes(x=reorder(metric,-Loading), y=Loading)) + 
+  geom_point(col = "blue", size = 1, alpha = 0.4) + theme(axis.text.x = element_text(angle = 60, hjust=1, size = 7))
+
+#PC4
+pc_all_interpret %>% 
+  gather(key = PC, value = Loading, -metric) %>% 
+  filter(PC == "PC4") %>% 
+  filter(abs(Loading) > 0.15) %>% 
+  ggplot(aes(x=reorder(metric,-Loading), y=Loading)) + 
+  geom_point(col = "blue", size = 1, alpha = 0.4) + theme(axis.text.x = element_text(angle = 60, hjust=1, size = 7))
+
+
+```
+
+PC1: High education, higher income, multicultural
+PC2: Bigger family and household size, younger electorates
+PC3: High property ownership and married
+PC4: High labor force participation, few retirees
+
+# Merging z scores of PCs with scaled profiles and TPP votes
+Note: Two party preferred in 2001 is derived from two candidate preferred. 141 of the 150 electorates had comparisons between LNP and ALP (or associated). The other nine are discarded.
+
+```{r}
+pc_tpp_16 <- tpp16 %>% 
+  select(DivisionNm, PartyAb, Liberal.National.Coalition.Percentage, Swing) %>% 
+  rename(Election_Division = DivisionNm, Perc_LNP = Liberal.National.Coalition.Percentage) %>% 
+  mutate(year = "2016") %>% 
+  right_join(abs_sc_z_all %>% filter(year == "2016"), by = c("Election_Division", "year"))
+
+pc_tpp_13 <- tpp13 %>% 
+  select(DivisionNm, PartyAb, Liberal.National.Coalition.Percentage, Swing) %>% 
+  rename(Election_Division = DivisionNm, Perc_LNP = Liberal.National.Coalition.Percentage) %>% 
+  mutate(year = "2013") %>% 
+  right_join(abs_sc_z_all %>% filter(year == "2013"), by = c("Election_Division", "year"))
+
+pc_tpp_10 <- tpp10 %>% 
+  select(DivisionNm, PartyAb, Liberal.National.Coalition.Percentage, Swing) %>% 
+  rename(Election_Division = DivisionNm, Perc_LNP = Liberal.National.Coalition.Percentage) %>% 
+  mutate(year = "2010") %>% 
+  right_join(abs_sc_z_all %>% filter(year == "2010"), by = c("Election_Division", "year"))
+
+pc_tpp_07 <- tpp07 %>% 
+  select(DivisionNm, PartyAb, Liberal.National.Coalition.Percentage, Swing) %>% 
+  rename(Election_Division = DivisionNm, Perc_LNP = Liberal.National.Coalition.Percentage) %>% 
+  mutate(year = "2007") %>% 
+  right_join(abs_sc_z_all %>% filter(year == "2007"), by = c("Election_Division", "year"))
+
+pc_tpp_04 <- tpp04 %>% 
+  select(DivisionNm, PartyAb, Liberal.National.Coalition.Percentage, Swing) %>% 
+  rename(Election_Division = DivisionNm, Perc_LNP = Liberal.National.Coalition.Percentage) %>% 
+  mutate(year = "2004") %>% 
+  right_join(abs_sc_z_all %>% filter(year == "2004"), by = c("Election_Division", "year"))
+
+pc_tpp_01 <- tpp01 %>% 
+  select(DivisionNm, PartyAb, CalculationValue, Swing) %>% 
+  rename(Election_Division = DivisionNm, Perc_LNP = CalculationValue) %>% 
+  mutate(year = "2001") %>% 
+  right_join(abs_sc_z_all %>% filter(year == "2001"), by = c("Election_Division", "year")) %>% 
+  filter(!is.na(PartyAb))
+
+pc_tpp <- rbind(pc_tpp_01, pc_tpp_04, pc_tpp_07, pc_tpp_10, pc_tpp_13, pc_tpp_16) %>% 
+  mutate(Perc_LNP = as.numeric(Perc_LNP))
+
+save(pc_tpp, file = "data/pc_tpp.rda")
+```
+
+```{r}
+pc_tpp %>% 
+  mutate(Educ = Bachelor + HighSchool + Postgraduate + Professional + 
+           Finance - Laborer - Tradesperson - DipCert,
+ #        Multicultural = BornOverseas - AusCitizen,
+         FamHouseSize = FamilyRatio + AverageHouseholdSize + Couple_WChild_House - 
+           Couple_NoChild_House - SP_House + Age00_04 + Age05_14,
+         PropertyMarr = Married + Owned + Mortgage - Renting - DiffAddress - 
+           PublicHousing - DeFacto,
+         LFRet = LFParticipation - Age65_74 - Age75_84 - Age85plus,
+         Incomes = MedianFamilyIncome + MedianHouseholdIncome + MedianPersonalIncome,
+         RentLoan = MedianLoanPay + MedianRent
+         ) %>% 
+  select(-c(Bachelor, HighSchool, Postgraduate, Professional, Finance, 
+            Laborer, Tradesperson, DipCert, 
+      #      BornOverseas, AusCitizen, 
+            FamilyRatio, AverageHouseholdSize, Couple_WChild_House, Couple_NoChild_House, 
+            SP_House, Age00_04, Age05_14, Married, Owned, Mortgage, Renting, DiffAddress, 
+            PublicHousing, DeFacto, Age65_74, Age75_84, Age85plus, LFParticipation, 
+            MedianFamilyIncome, MedianHouseholdIncome, MedianPersonalIncome, MedianLoanPay,
+            MedianRent,
+            ends_with("NS"))) %>% 
+  select(-c(Population, Area, PartyAb, starts_with("PC"), EmuneratedElsewhere, InternetAccess, InternetUse, EnglishOnly, Christianity, Other_NonChrist, starts_with("Age"), Volunteer)) -> data_mod_unscaled
+
+# Scale and center factors
+data_mod <- data_mod_unscaled %>% 
+  mutate(Perc_LNP = as.character(Perc_LNP), Swing = as.character(Swing))
+
+for (i in 1:6) {
+  
+  if (i == 1) {
+    data_mod[1:140, unlist(lapply(data_mod, is.numeric))] <- scale(data_mod[1:140, unlist(lapply(data_mod, is.numeric))], center = TRUE, scale = TRUE)
+  } else {
+  data_mod[(140 + 150*(i-2)+1):(140 + 150*(i-1)), unlist(lapply(data_mod, is.numeric))] <- scale(data_mod[(140 + 150*(i-2)+1):(140 + 150*(i-1)), unlist(lapply(data_mod, is.numeric))], center = TRUE, scale = TRUE) }
+  
+}
+
+data_mod <- data_mod %>% 
+  mutate(Perc_LNP = as.numeric(Perc_LNP), Swing = as.numeric(Swing))
+
+
+save(data_mod, file = "data/data_mod.rda")
+```
+
+
+

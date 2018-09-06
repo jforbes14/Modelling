@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.RProj
+Raw/
+*.RProj
+*.DS_Store
+.DS_Store
+Junk/

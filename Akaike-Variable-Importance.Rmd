@@ -1,0 +1,521 @@
+---
+title: "Akaike-Variable-Importance"
+author: "Jeremy Forbes"
+date: "30/08/2018"
+output: pdf_document
+---
+
+```{r}
+library(tidyverse)
+load("~/Documents/R/Modelling/data/data_mod.rda")
+```
+
+# Determining variable importance using Akaike weights
+
+## All 1-5 way models for each year
+
+*Uses all_X_way_fn.R*
+```{r}
+# 2016
+data_mod16 <- data_mod %>% filter(year == "2016")
+y16 <- data_mod16$Perc_LNP
+x16 <- data_mod16 %>% 
+  select(-c(Perc_LNP, Swing, Election_Division, year)) %>%
+  scale() %>% # already has been scaled, so this doesn't change anything
+  as.data.frame() 
+
+fiveway_2016 <- all_X_way(y16, x16, n_vars = 5)
+#fourway_2016 <- all_X_way(y16, x16, n_vars = 4)
+#threeway_2016 <- all_X_way(y16, x16, n_vars = 3)
+#twoway_2016 <- all_X_way(y16, x16, n_vars = 2)
+#oneway_2016 <- all_X_way(y16, x16, n_vars = 1)
+
+
+# 2013
+data_mod13 <- data_mod %>% filter(year == "2013")
+y13 <- data_mod13$Perc_LNP
+x13 <- data_mod13 %>% 
+  dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+  scale() %>% # already has been scaled, so this doesn't change anything
+  as.data.frame() 
+
+fiveway_2013 <- all_X_way(y13, x13, n_vars = 5)
+#fourway_2013 <- all_X_way(y13, x13, n_vars = 4)
+#threeway_2013 <- all_X_way(y13, x13, n_vars = 3)
+#twoway_2013 <- all_X_way(y13, x13, n_vars = 2)
+#oneway_2013 <- all_X_way(y13, x13, n_vars = 1)
+
+# 2010
+data_mod10 <- data_mod %>% filter(year == "2010")
+y10 <- data_mod10$Perc_LNP
+x10 <- data_mod10 %>% 
+  dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+  scale() %>% # already has been scaled, so this doesn't change anything
+  as.data.frame() 
+
+fiveway_2010 <- all_X_way(y10, x10, n_vars = 5)
+#fourway_2010 <- all_X_way(y10, x10, n_vars = 4)
+#threeway_2010 <- all_X_way(y10, x10, n_vars = 3)
+#twoway_2010 <- all_X_way(y10, x10, n_vars = 2)
+#oneway_2010 <- all_X_way(y10, x10, n_vars = 1)
+
+
+# 2007
+data_mod07 <- data_mod %>% filter(year == "2007")
+y07 <- data_mod07$Perc_LNP
+x07 <- data_mod07 %>% 
+  dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+  scale() %>% # already has been scaled, so this doesn't change anything
+  as.data.frame() 
+
+fiveway_2007 <- all_X_way(y07, x07, n_vars = 5)
+#fourway_2007 <- all_X_way(y07, x07, n_vars = 4)
+#threeway_2007 <- all_X_way(y07, x07, n_vars = 3)
+#twoway_2007 <- all_X_way(y07, x07, n_vars = 2)
+#oneway_2007 <- all_X_way(y07, x07, n_vars = 1)
+
+
+# 2004
+data_mod04 <- data_mod %>% filter(year == "2004")
+y04 <- data_mod04$Perc_LNP
+x04 <- data_mod04 %>% 
+  dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+  scale() %>% # already has been scaled, so this doesn't change anything
+  as.data.frame() 
+
+fiveway_2004 <- all_X_way(y04, x04, n_vars = 5)
+#fourway_2004 <- all_X_way(y04, x04, n_vars = 4)
+#threeway_2004 <- all_X_way(y04, x04, n_vars = 3)
+#twoway_2004 <- all_X_way(y04, x04, n_vars = 2)
+#oneway_2004 <- all_X_way(y04, x04, n_vars = 1)
+
+
+# 2001
+data_mod01 <- data_mod %>% filter(year == "2001")
+y01 <- data_mod01$Perc_LNP
+x01 <- data_mod01 %>% 
+  dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+  scale() %>% # already has been scaled, so this doesn't change anything
+  as.data.frame() 
+
+fiveway_2001 <- all_X_way(y01, x01, n_vars = 5)
+#fourway_2001 <- all_X_way(y01, x01, n_vars = 4)
+#threeway_2001 <- all_X_way(y01, x01, n_vars = 3)
+#twoway_2001 <- all_X_way(y01, x01, n_vars = 2)
+#oneway_2001 <- all_X_way(y01, x01, n_vars = 1)
+
+save(fiveway_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2016.rda")
+save(fiveway_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2013.rda")
+save(fiveway_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2010.rda")
+save(fiveway_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2007.rda")
+save(fiveway_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2004.rda")
+save(fiveway_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/fiveway_2001.rda")
+
+#save(fourway_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2016.rda")
+#save(fourway_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2013.rda")
+#save(fourway_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2010.rda")
+#save(fourway_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2007.rda")
+#save(fourway_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2004.rda")
+#save(fourway_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/fourway_2001.rda")
+
+#save(threeway_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2016.rda")
+#save(threeway_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2013.rda")
+#save(threeway_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2010.rda")
+#save(threeway_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2007.rda")
+#save(threeway_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2004.rda")
+#save(threeway_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/threeway_2001.rda")
+
+#save(twoway_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2016.rda")
+#save(twoway_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2013.rda")
+#save(twoway_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2010.rda")
+#save(twoway_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2007.rda")
+#save(twoway_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2004.rda")
+#save(twoway_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/twoway_2001.rda")
+
+#save(oneway_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2016.rda")
+#save(oneway_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2013.rda")
+#save(oneway_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2010.rda")
+#save(oneway_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2007.rda")
+#save(oneway_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2004.rda")
+#save(oneway_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/oneway_2001.rda")
+```
+
+
+2016: 
+All "most important" are the same as in the best AIC model.
+
+
+## What are the top/acceptable models?
+
+### A little bit of likelihood theory
+
+Akaike weight, $w_i$, is the weight of evidence in favor of model $i$ being the Kullback-Leibler optimum for given set (Burnham and Anderson, 2002). By minimizing K-L information, we are reducing the information lost by using model $g$ to approximate the true $f$ (see page 51).
+
+The difference in AIC between model $i$ and the minimum AIC in the model set is $\Delta_i = AIC_i - AIC_{min}$. 
+
+Akaike weights (Burnham and Anderson, 2002) are assigned to each model, which are calculated:
+$$w_i = \frac {\exp(-\frac{1}{2}\Delta_i)} {\sum_{r=1} ^R \exp(-\frac{1}{2}\Delta_r)}$$
+
+The weight represents the posterior probability that model $i$ is our best model.
+
+### Variable importance
+pg 194-195
+For each variable, sum the Akaike weights that include that variable to get a measure of variable importance.
+- Important: this can only be used when there is an equal number of models that contain this variable. This means I can't directly apply this to the top 100 AIC. Must apply to the all 5 way models.
+
+This is refuted by Gillingham and Dechaume-Moncharmont (2017), who propose the used of model-averaged standardised parameter estimates. See how they compare across the two methods. (Add to lit review!).
+
+*Uses variableimp_fn* 
+```{r}
+## 2016
+var_imp_16 <- var_imp(fiveway_2016) %>% 
+  mutate(year = "2016")
+
+## 2013
+var_imp_13 <- var_imp(fiveway_2013) %>% 
+  mutate(year = "2013")
+
+## 2010
+var_imp_10 <- var_imp(fiveway_2010) %>% 
+  mutate(year = "2010")
+
+## 2007
+var_imp_07 <- var_imp(fiveway_2007) %>% 
+  mutate(year = "2007")
+
+## 2004
+var_imp_04 <- var_imp(fiveway_2004) %>% 
+  mutate(year = "2004")
+
+## 2001
+var_imp_01 <- var_imp(fiveway_2001) %>% 
+  mutate(year = "2001")
+
+## Combine and add variable names
+name_vars <- data.frame(var = 1:ncol(x16), varname = names(x16))
+
+var_imp_all <- rbind(var_imp_16, var_imp_13, var_imp_10, 
+                     var_imp_07, var_imp_04, var_imp_01) %>% 
+  left_join(name_vars, by = "var")
+#save(var_imp_all, file = "~/Documents/R/Modelling/data/var_imp_all.rda")
+
+
+# Plot all together
+var_imp_all %>% 
+#  filter(year == "2016") %>% 
+  ggplot(aes(x=varname, y=sum_w)) + geom_jitter(aes(col = year, label = year), width = 0.2, size = 4) + geom_line(aes(group = varname), col = "blue", alpha = 0.5) + theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+
+# Plot separate years
+var_imp_all %>% 
+  filter(sum_w > 0.10) %>% 
+  ggplot(aes(x=varname, y=sum_w)) + geom_point(aes(col = year, label = year), alpha = 0.8) + theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + facet_wrap(~year)
+
+# Plot weighted average coefficients
+var_imp_all %>% 
+#  filter(year == "2016") %>% 
+  ggplot(aes(x=varname, y=coef_wavg)) + geom_jitter(aes(col = year, label = year), width = 0.2, size = 2) + geom_line(aes(group = varname), col = "blue", alpha = 0.5) + theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+
+# best 5 var model
+#best5models <- rbind(
+#(fiveway_2016 %>% arrange(AIC))[1,] %>% mutate(year = "2016"),
+#(fiveway_2013 %>% arrange(AIC))[1,] %>% mutate(year = "2013"),
+#(fiveway_2010 %>% arrange(AIC))[1,] %>% mutate(year = "2010"),
+#(fiveway_2007 %>% arrange(AIC))[1,] %>% mutate(year = "2007"),
+#(fiveway_2004 %>% arrange(AIC))[1,] %>% mutate(year = "2004"),
+#(fiveway_2001 %>% arrange(AIC))[1,] %>% mutate(year = "2001")
+#)
+```
+
+## Sum of Akaike Weights for Most Imporant variables
+
+```{r}
+# Top 6 variables
+var_imp_all %>% 
+  group_by(year) %>% 
+  top_n(n = 5, wt = sum_w) %>% View
+
+```
+
+
+### Fiveway
+2001: Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, CurrentlyStudying, LFRet
+2004: Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, Educ, Extractive
+2007: Born_SE_Europe, ManagerAdminClericalSales, Extractive, Born_UK, OneParent_House
+2010: ManagerAdminClericalSales, Extractive, Born_SE_Europe, RentLoan, NoReligion
+2013: ManagerAdminClericalSales, Extractive, Born_SE_Europe, RentLoan, LFRet
+2016: ManagerAdminClericalSales, Extractive, Born_SE_Europe, LFRet, RentLoan
+
+Superset (10): Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, CurrentlyStudying, LFRet, Extractive, Educ, Born_UK, RentLoan, NoReligion
+
+### Fourway
+2001: Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, CurrentlyStudying
+2004: Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, Educ
+2007: Born_SE_Europe, ManagerAdminClericalSales, Extractive, Born_UK
+2010: ManagerAdminClericalSales, Extractive, Born_SE_Europe, RentLoan
+2013: ManagerAdminClericalSales, Extractive, Born_SE_Europe, *PropertyMarr*
+2016: ManagerAdminClericalSales, Extractive, Born_SE_Europe, LFRet
+
+Superset (10): Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, CurrentlyStudying, LFRet, Extractive, Educ, Born_UK, RentLoan, PropertyMarr
+
+### Threeway
+2001: Born_SE_Europe, ManagerAdminClericalSales, OneParent_House
+2004: Born_SE_Europe, ManagerAdminClericalSales, Extractive
+2007: Born_SE_Europe, ManagerAdminClericalSales, Extractive
+2010: ManagerAdminClericalSales, Extractive, Born_SE_Europe
+2013: ManagerAdminClericalSales, Extractive, Born_SE_Europe
+2016: ManagerAdminClericalSales, Extractive, Born_SE_Europe
+
+Superset (4): ManagerAdminClericalSales, Extractive, Born_SE_Europe, OneParent_House
+
+
+## Next steps
+Write a bit about the Akaike weights and how summing infers variable importance. Look at the distribution of weights for the 5 variable models. We find that the model with minimum AIC dominates the weights, so it may not be such a good measure.
+
+Let's try looking at the standardized coefficients.
+
+## Standardized coefficients
+
+Uses *std_coef_fn.R*.
+
+```{r}
+#std_coef_2016 <- std_coef_fn(fiveway_2016)
+std_coef_2013 <- std_coef_fn(fiveway_2013)
+std_coef_2010 <- std_coef_fn(fiveway_2010)
+std_coef_2007 <- std_coef_fn(fiveway_2007)
+std_coef_2004 <- std_coef_fn(fiveway_2004)
+std_coef_2001 <- std_coef_fn(fiveway_2001)
+
+#save(std_coef_2016, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2016.rda")
+save(std_coef_2013, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2013.rda")
+save(std_coef_2010, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2010.rda")
+save(std_coef_2007, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2007.rda")
+save(std_coef_2004, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2004.rda")
+save(std_coef_2001, file = "/Users/Jeremy/Documents/R/Modelling/data/std_coef_2001.rda")
+```
+
+```{r}
+## Combine and add variable names
+name_vars <- data.frame(var = 1:ncol(x16), varname = names(x16))
+
+std_coef_all <- rbind(std_coef_2016 %>% mutate(year = "2016"), 
+                      std_coef_2013 %>% mutate(year = "2013"),
+                      std_coef_2010 %>% mutate(year = "2010"), 
+                      std_coef_2007 %>% mutate(year = "2007"), 
+                      std_coef_2004 %>% mutate(year = "2004"), 
+                      std_coef_2001 %>% mutate(year = "2001")) %>% 
+  rename(var = var_num) %>% 
+  left_join(name_vars, by = "var")
+
+
+std_coef_all %>%
+#  filter(year == "2016") %>% 
+#  mutate(snr = avg_coef/(variance_coef^0.5)) %>% #signal to noise ratio
+#  ggplot(aes(x=reorder(varname %>% as.character(), snr), y=snr)) + 
+  ggplot(aes(x=reorder(varname %>% as.character(), abs(-avg_coef)), y=abs(avg_coef))) + 
+  geom_line(aes(group = varname)) +
+  geom_point(aes(col = year, label = varname)) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + facet_wrap(~year)
+
+std_coef_all %>% 
+  arrange(year, -abs(avg_coef)) %>% 
+  group_by(year) %>% 
+  select(varname, avg_coef, year) %>% 
+  top_n(wt = abs(avg_coef), n = 5) %>% 
+  group_by(varname) %>% 
+  count(n = n())
+```
+
+Jittering all coefficient estimates
+```{r}
+fiveway_2016 %>% unnest %>% 
+  rename(var = vars) %>% left_join(name_vars, by = "var") %>% 
+  ggplot(aes(x = varname, y = coef)) + geom_jitter(alpha = 0.01) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+
+```
+
+Jittering coefficient estimates using fourway, and boxplots for fiveway over the top
+```{r}
+fiveway_2016 %>% unnest %>% 
+  rename(var = vars) %>% left_join(name_vars, by = "var") %>% 
+  ggplot(aes(x = varname, y = coef)) + geom_jitter(alpha = 0.05, col = "red", data = fourway_2016 %>% unnest %>% rename(var = vars) %>% left_join(name_vars, by = "var")) + geom_boxplot(col = "blue", fill = "light blue", alpha = 0.6) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+
+```
+
+Average coefficient for each of two, three, four and five way models
+```{r}
+allXway_std_coef_2016 <- rbind(std_coef_fn(fiveway_2016) %>% mutate(Xway = 5), 
+      std_coef_fn(fourway_2016) %>% mutate(Xway = 4), 
+      std_coef_fn(threeway_2016) %>% mutate(Xway = 3), 
+      std_coef_fn(twoway_2016) %>% mutate(Xway = 2), 
+      std_coef_fn(oneway_2016) %>% mutate(Xway = 1))
+
+allXway_std_coef_2016 %>% left_join(name_vars, by = "var") %>% 
+  mutate(Xway = ifelse(Xway == "fiveway", 5,
+                       ifelse(Xway == "fourway", 4, 
+                              ifelse( Xway == "threeway", 3, 
+                                      ifelse(Xway == "twoway", 2, 1))))) %>% filter(Xway == 5) %>% ggplot(aes(x=reorder(varname,avg_coef), y=avg_coef)) + geom_point() + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+#  mutate(lower = avg_coef - 1.96*(variance_coef^0.5), upper = avg_coef + 1.96*(variance_coef^0.5)) %>% 
+  ggplot(aes(x=varname, y= avg_coef)) + 
+  geom_hline(aes(yintercept = 0)) + 
+  geom_text(aes(label = Xway), col = "blue") + 
+#  geom_errorbar(aes(x = varname, ymin = lower, ymax = upper, col = Xway)) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+
+
+```
+
+
+
+## Begin
+
+We begin this chapter by making one thing absolutely clear. Full reality cannot be included in a model [@BurnhamAnderson2002]. Rather, we seek to estimate a good model to yield an estimate the impacts of socio-demographics, based on the empirical data in hand. 
+
+Even after reducing the dimension of our data set, we still have 30 possible predictors to choose from, and only 150 observations. Our approach in estimating a *good* model is dependent on variable selection. We consider two methods of determining variable importance, an information-theoretic approach using Akaike Weights [@BurnhamAnderson2002], and the comparison of (standardized) regression coefficients. There is no consensus as to which method should be preferred (although opinions do differ - see @Gillingham17 and @GiamOlden16).
+
+To commence our search, we run all possible five variable regressions from the possible 30 predictors, for each election. We will analyse these models, using these two approaches, to draw conclusions on variable importance - so that we can eventually build a single model that serves as a *good* approximation.
+
+*In an ideal world with infinite computing power, we would run OLS regressions with all possible combinations of the covariates in order to better understand how estimated effects of variables are affected by the presence of other variable combinations.*
+
+## Akaike Weights
+This approach is fundamentally driven by Akaike's information criterion (AIC) [@Akaike73], which uses Kullback-Leibler (K-L) information as a basis for model selection [@BurnhamAnderson2002]. K-L information, $I$, for a true model $f$ and approximating model $g$ is given by:
+
+$$I(f,g) = \int f(x) \log \Big( \frac {f(x)} {g(x|\theta)} \Big) dx$$ 
+The K-L information can be interpreted as the information lost when $g$ is used to approximate $f$. Minimizing K-L distance is our goal in determining best fit, which is what we do by choosing a model (from a set) with minimum AIC.
+
+By comparing the AIC of each model in the set with the minimum (optimal) AIC, we get a measure of relative information lost, and hence performance. Let $\Delta_i = AIC_i - AIC_{min}$, which is the difference in AIC between model $i$ and the minimum AIC in the model set. Akaike weights for each model, $w_i$, are then calculated as follows:
+
+$$w_i = \frac {\exp(-\frac{1}{2}\Delta_i)} {\sum_{r=1} ^R \exp(-\frac{1}{2}\Delta_r)}$$
+
+The numerator can be interpreted as the likelihood of model $i$, and hence $w_i$ serves as a comparitive measure of evidence in favor of model $i$ being the K-L optimum for given set [@BurnhamAnderson2002]. This can be thought of the posterior probabilities in a Bayesian approach with each model having equal prior probabilities. Relative variable importance can then be estimated by taking the sum of Akaike weights across models in which that variable appears. Let this sum be denoted $sw_j$, for variable $j$. 
+
+
+
+
+
+
+
+
+@BurnhamAnderson2002 explains in 
+
+
+## Standardized Coefficients
+
+
+Multimodel inference
+- We have a model that clearly is better than the rest (w > 0.9)
+- Shouldn't be looking at model-averaged coefficients because of how convincing this is
+- However, we are not interested in *just* using 5 variables
+
+Elastic Net
+
+To determine variable importance amongst using the set of all possible five variable combinations for each election. 142506 models 
+
+All variables in our model set have been scaled to have variance of one, and centered to zero. The coefficients can be thought of as *standardized coefficients* - as a one standard deviation increase in regressor $p$ results in a $\beta_p$ increase in the response [@model-vis]. This is very beneficial, as we can compare the relative effects of regressors within a model, and estimated effects across models [@Schielzth2010].
+
+For each election, we can infer variable importance based on comparing the distributions of standardized coefficients. An important variable should have a distribution large (absolute) mean and low variance.
+
+In 2016, we see that 
+
+```{r}
+std_coef_all %>%
+  filter(year == "2016") %>% 
+  select(varname, coef, avg_coef, year) %>% 
+  unnest(coef) %>%
+  ggplot(aes(x = reorder(varname, abs(avg_coef)), y = coef)) + 
+  geom_violin() +
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+```
+
+## Adding iteractions to all three-way combinations and seeing if conclusions of variable importance change
+```{r}
+# Combined df containing original order of AW importance, interactions with Educ, Income
+interaction_AW_df <- rbind(
+  var_imp(threeway_2016) %>% mutate(Type = "NoInteractions") %>% left_join(name_vars, by = "var"),
+  var_imp(all_X_way(y_vec = y16, x_df = x16, n_vars = 3, interact_varname = "Educ")) %>% left_join(name_vars, by = "var") %>% mutate(Type = "Educ"),
+  var_imp(all_X_way(y_vec = y16, x_df = x16, n_vars = 3, interact_varname = "Incomes")) %>% left_join(name_vars, by = "var") %>% mutate(Type = "Incomes")
+)
+
+## Top 5 variables - AW
+interaction_AW_df %>% 
+  group_by(Type) %>% 
+  top_n(n = 5, wt = sum_w) %>% 
+  group_by(varname) %>% 
+  summarise(types = list(Type)) %>% View()
+
+## Order of importance
+interaction_AW_df %>% 
+  arrange(Type, -sum_w)%>% 
+  mutate(ImportanceOrder = rep(30:1, 4)) %>% 
+  ggplot(aes(x = reorder(varname,ImportanceOrder), y = ImportanceOrder)) + geom_point(aes(col = Type)) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+
+
+# Plotting sum of weights
+interaction_AW_df %>% 
+  ggplot(aes(x = varname, y = log(sum_w*10))) + 
+  geom_point(aes(col = Type), size = 2.5, alpha = 0.8) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+
+
+## Top 5 variables - SC
+interaction_SC_df <- rbind(
+  std_coef_fn(threeway_2016) %>% mutate(Type = "NoInteractions") %>% left_join(name_vars, by = "var"),
+  std_coef_fn(all_X_way(y_vec = y16, x_df = x16, n_vars = 3, interact_varname = "Educ")) %>% left_join(name_vars, by = "var") %>% mutate(Type = "Educ"),
+  std_coef_fn(all_X_way(y_vec = y16, x_df = x16, n_vars = 3, interact_varname = "Incomes")) %>% left_join(name_vars, by = "var") %>% mutate(Type = "Incomes")
+)
+
+## Top 5 variables - SC
+interaction_SC_df %>% 
+  group_by(Type) %>% 
+  top_n(n = 6, wt = avg_coef) %>% 
+  group_by(varname) %>% 
+  summarise(types = list(Type), std_coef = list(avg_coef)) %>% View()
+
+
+```
+
+Including interactions does not change our conclusions of variable importance significantly. The most important variables stay mostly similar (using 2016 as our test).
+
+
+# Can we even do this?
+
+Testing all possible models can be used to generate a set of best models as long as there is an ecological justification why these models make sense.
+
+Exploratory analysis using stepwise or model selection based on all possible models cannot be reliably made (Grace 2006).
+
+Hypothesis set (of models) is ususally (often) informed by existing research.
+
+
+# Junk
+
+
+Much of the techniques used for multimodel inference in this study are predominantly used in ecological studies.
+
+Our aim is to determine variable importance using the sets of five variable models we have obtained for each election. We explore two approaches. The first ranks variable importance using Akaike Weights, which is @BurnhamAnderson2002 using Akaike Weights 
+
+
+
+## What are the top/acceptable models?
+
+### A little bit of likelihood theory
+
+Akaike weight, $w_i$, is the weight of evidence in favor of model $i$ being the Kullback-Leibler optimum for given set (Burnham and Anderson, 2002). By minimizing K-L information, we are reducing the information lost by using model $g$ to approximate the true $f$ (see page 51).
+
+The difference in AIC between model $i$ and the minimum AIC in the model set is $\Delta_i = AIC_i - AIC_{min}$. 
+
+Akaike weights (Burnham and Anderson, 2002) are assigned to each model, which are calculated:
+$$w_i = \frac {\exp(-\frac{1}{2}\Delta_i)} {\sum_{r=1} ^R \exp(-\frac{1}{2}\Delta_r)}$$
+
+The weight represents the posterior probability that model $i$ is our best model.
+
+### Variable importance
+pg 194-195
+For each variable, sum the Akaike weights that include that variable to get a measure of variable importance.
+- Important: this can only be used when there is an equal number of models that contain this variable. This means I can't directly apply this to the top 100 AIC. Must apply to the all 5 way models.
+
+This is refuted by Gillingham and Dechaume-Moncharmont (2017), who propose the used of model-averaged standardised parameter estimates. See how they compare across the two methods. (Add to lit review!).
+
+
