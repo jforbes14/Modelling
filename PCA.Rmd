@@ -5,11 +5,16 @@ date: "10/08/2018"
 output: pdf_document
 ---
 
+This R markdown runs PCA on the profiles for each election. Intuitive variable groups are derived from the PCs on the combined dataset, and collected into factors.
+
 This uses the CED imputations, not POA.
+
+"data_mod.rda" and "pc_tpp.rda" are created by this file.
 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warnings = FALSE)
+knitr::opts_knit$set(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
 library(tidyverse)
 library(ggplot2)
 library(visreg)
@@ -18,18 +23,19 @@ library(broom)
 
 
 ```{r loadandedit, include=FALSE}
-load("~/Documents/R/ABS/Clean-ABS/data/abs2001.rda")
-load("~/Documents/R/ABS/Clean-ABS/data/abs2016.rda")
-load("~/Documents/R/ABS/Clean-ABS/data/sd2004.rda")
-load("~/Documents/R/ABS/Clean-ABS/data/sd2007.rda")
-load("~/Documents/R/ABS/Clean-ABS/data/sd2010.rda")
-load("~/Documents/R/ABS/Clean-ABS/data/sd2013.rda")
-load("~/Documents/R/AEC/data/tpp16.rda")
-load("~/Documents/R/AEC/data/tpp13.rda")
-load("~/Documents/R/AEC/data/tpp10.rda")
-load("~/Documents/R/AEC/data/tpp07.rda")
-load("~/Documents/R/AEC/data/tpp04.rda")
-load("~/Documents/R/AEC/data/tpp01.rda")
+getwd()
+load("~/Documents/R/Data/Clean/abs2001.rda")
+load("~/Documents/R/Data/Clean/abs2016.rda")
+load("~/Documents/R/Data/Clean/sd2004.rda")
+load("~/Documents/R/Data/Clean/sd2007.rda")
+load("~/Documents/R/Data/Clean/sd2010.rda")
+load("~/Documents/R/Data/Clean/sd2013.rda")
+load("~/Documents/R/Data/Clean/tpp16.rda")
+load("~/Documents/R/Data/Clean/tpp13.rda")
+load("~/Documents/R/Data/Clean/tpp10.rda")
+load("~/Documents/R/Data/Clean/tpp07.rda")
+load("~/Documents/R/Data/Clean/tpp04.rda")
+load("~/Documents/R/Data/Clean/tpp01.rda")
 
 colnames(abs2001)[which(colnames(abs2001) == "Electorate")] <- "Election_Division"
 colnames(abs2016)[which(colnames(abs2016) == "Electorate")] <- "Election_Division"
@@ -395,7 +401,7 @@ pc_tpp_01 <- tpp01 %>%
 pc_tpp <- rbind(pc_tpp_01, pc_tpp_04, pc_tpp_07, pc_tpp_10, pc_tpp_13, pc_tpp_16) %>% 
   mutate(Perc_LNP = as.numeric(Perc_LNP))
 
-save(pc_tpp, file = "data/pc_tpp.rda")
+save(pc_tpp, file = "Clean-Data/pc_tpp.rda")
 ```
 
 ```{r}
@@ -439,7 +445,7 @@ data_mod <- data_mod %>%
   mutate(Perc_LNP = as.numeric(Perc_LNP), Swing = as.numeric(Swing))
 
 
-save(data_mod, file = "data/data_mod.rda")
+save(data_mod, file = "Clean-Data/data_mod.rda")
 ```
 
 
