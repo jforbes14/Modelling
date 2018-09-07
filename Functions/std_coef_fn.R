@@ -55,4 +55,3 @@ std_coef_fn <- function(Xway) {
   
 }
 
-#test <- std_coef_fn(Xway = twoway_2016)

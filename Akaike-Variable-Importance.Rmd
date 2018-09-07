@@ -20,6 +20,14 @@ load("./Clean-Data/data_mod.rda")
 
 *Uses all_X_way_fn.R*
 ```{r}
+# Load existing
+load("Clean-Data/fiveway_2016.rda")
+load("Clean-Data/fiveway_2013.rda")
+load("Clean-Data/fiveway_2010.rda")
+load("Clean-Data/fiveway_2007.rda")
+load("Clean-Data/fiveway_2004.rda")
+load("Clean-Data/fiveway_2001.rda")
+
 # 2016
 data_mod16 <- data_mod %>% filter(year == "2016")
 y16 <- data_mod16$Perc_LNP
@@ -29,11 +37,7 @@ x16 <- data_mod16 %>%
   as.data.frame() 
 
 fiveway_2016 <- all_X_way(y16, x16, n_vars = 5)
-#fourway_2016 <- all_X_way(y16, x16, n_vars = 4)
-#threeway_2016 <- all_X_way(y16, x16, n_vars = 3)
-#twoway_2016 <- all_X_way(y16, x16, n_vars = 2)
-#oneway_2016 <- all_X_way(y16, x16, n_vars = 1)
-
+oneway_2016 <- all_X_way(y16, x16, n_vars = 1)
 
 # 2013
 data_mod13 <- data_mod %>% filter(year == "2013")
@@ -44,10 +48,7 @@ x13 <- data_mod13 %>%
   as.data.frame() 
 
 fiveway_2013 <- all_X_way(y13, x13, n_vars = 5)
-#fourway_2013 <- all_X_way(y13, x13, n_vars = 4)
-#threeway_2013 <- all_X_way(y13, x13, n_vars = 3)
-#twoway_2013 <- all_X_way(y13, x13, n_vars = 2)
-#oneway_2013 <- all_X_way(y13, x13, n_vars = 1)
+oneway_2013 <- all_X_way(y13, x13, n_vars = 1)
 
 # 2010
 data_mod10 <- data_mod %>% filter(year == "2010")
@@ -58,10 +59,7 @@ x10 <- data_mod10 %>%
   as.data.frame() 
 
 fiveway_2010 <- all_X_way(y10, x10, n_vars = 5)
-#fourway_2010 <- all_X_way(y10, x10, n_vars = 4)
-#threeway_2010 <- all_X_way(y10, x10, n_vars = 3)
-#twoway_2010 <- all_X_way(y10, x10, n_vars = 2)
-#oneway_2010 <- all_X_way(y10, x10, n_vars = 1)
+oneway_2010 <- all_X_way(y10, x10, n_vars = 1)
 
 
 # 2007
@@ -73,10 +71,7 @@ x07 <- data_mod07 %>%
   as.data.frame() 
 
 fiveway_2007 <- all_X_way(y07, x07, n_vars = 5)
-#fourway_2007 <- all_X_way(y07, x07, n_vars = 4)
-#threeway_2007 <- all_X_way(y07, x07, n_vars = 3)
-#twoway_2007 <- all_X_way(y07, x07, n_vars = 2)
-#oneway_2007 <- all_X_way(y07, x07, n_vars = 1)
+oneway_2007 <- all_X_way(y07, x07, n_vars = 1)
 
 
 # 2004
@@ -88,10 +83,7 @@ x04 <- data_mod04 %>%
   as.data.frame() 
 
 fiveway_2004 <- all_X_way(y04, x04, n_vars = 5)
-#fourway_2004 <- all_X_way(y04, x04, n_vars = 4)
-#threeway_2004 <- all_X_way(y04, x04, n_vars = 3)
-#twoway_2004 <- all_X_way(y04, x04, n_vars = 2)
-#oneway_2004 <- all_X_way(y04, x04, n_vars = 1)
+oneway_2004 <- all_X_way(y04, x04, n_vars = 1)
 
 
 # 2001
@@ -103,38 +95,14 @@ x01 <- data_mod01 %>%
   as.data.frame() 
 
 fiveway_2001 <- all_X_way(y01, x01, n_vars = 5)
-#fourway_2001 <- all_X_way(y01, x01, n_vars = 4)
-#threeway_2001 <- all_X_way(y01, x01, n_vars = 3)
-#twoway_2001 <- all_X_way(y01, x01, n_vars = 2)
-#oneway_2001 <- all_X_way(y01, x01, n_vars = 1)
+oneway_2001 <- all_X_way(y01, x01, n_vars = 1)
 
-save(fiveway_2016, file = "./Clean-Data/fiveway_2016.rda")
-save(fiveway_2013, file = "./Clean-Data/fiveway_2013.rda")
-save(fiveway_2010, file = "./Clean-Data/fiveway_2010.rda")
-save(fiveway_2007, file = "./Clean-Data/fiveway_2007.rda")
-save(fiveway_2004, file = "./Clean-Data/fiveway_2004.rda")
-save(fiveway_2001, file = "./Clean-Data/fiveway_2001.rda")
-
-#save(fourway_2016, file = "./Clean-Data/fourway_2016.rda")
-#save(fourway_2013, file = "./Clean-Data/fourway_2013.rda")
-#save(fourway_2010, file = "./Clean-Data/fourway_2010.rda")
-#save(fourway_2007, file = "./Clean-Data/fourway_2007.rda")
-#save(fourway_2004, file = "./Clean-Data/fourway_2004.rda")
-#save(fourway_2001, file = "./Clean-Data/fourway_2001.rda")
-
-#save(threeway_2016, file = "./Clean-Data/threeway_2016.rda")
-#save(threeway_2013, file = "./Clean-Data/threeway_2013.rda")
-#save(threeway_2010, file = "./Clean-Data/threeway_2010.rda")
-#save(threeway_2007, file = "./Clean-Data/threeway_2007.rda")
-#save(threeway_2004, file = "./Clean-Data/threeway_2004.rda")
-#save(threeway_2001, file = "./Clean-Data/threeway_2001.rda")
-
-#save(twoway_2016, file = "./Clean-Data/twoway_2016.rda")
-#save(twoway_2013, file = "./Clean-Data/twoway_2013.rda")
-#save(twoway_2010, file = "./Clean-Data/twoway_2010.rda")
-#save(twoway_2007, file = "./Clean-Data/twoway_2007.rda")
-#save(twoway_2004, file = "./Clean-Data/twoway_2004.rda")
-#save(twoway_2001, file = "./Clean-Data/twoway_2001.rda")
+#save(fiveway_2016, file = "./Clean-Data/fiveway_2016.rda")
+#save(fiveway_2013, file = "./Clean-Data/fiveway_2013.rda")
+#save(fiveway_2010, file = "./Clean-Data/fiveway_2010.rda")
+#save(fiveway_2007, file = "./Clean-Data/fiveway_2007.rda")
+#save(fiveway_2004, file = "./Clean-Data/fiveway_2004.rda")
+#save(fiveway_2001, file = "./Clean-Data/fiveway_2001.rda")
 
 #save(oneway_2016, file = "./Clean-Data/oneway_2016.rda")
 #save(oneway_2013, file = "./Clean-Data/oneway_2013.rda")
@@ -201,9 +169,148 @@ name_vars <- data.frame(var = 1:ncol(x16), varname = names(x16))
 var_imp_all <- rbind(var_imp_16, var_imp_13, var_imp_10, 
                      var_imp_07, var_imp_04, var_imp_01) %>% 
   left_join(name_vars, by = "var")
-#save(var_imp_all, file = "~/Documents/R/Modelling/data/var_imp_all.rda")
+save(var_imp_all, file = "~/Documents/R/Modelling/data/var_imp_all.rda")
+
+```
+
+## Sum of Akaike Weights for Most Imporant variables
+
+```{r}
+# Print top 5 superset
+var_imp_all %>% 
+  arrange(year, -sum_w) %>% 
+  group_by(year) %>% 
+  select(varname, sum_w, year) %>% 
+  top_n(wt = sum_w, n = 5) %>% 
+  group_by(varname) %>% 
+  count(n = n())
+
+```
+
+## Next steps
+Write a bit about the Akaike weights and how summing infers variable importance. Look at the distribution of weights for the 5 variable models. We find that the model with minimum AIC dominates the weights, so it may not be such a good measure.
+
+Let's try looking at the standardized coefficients.
+
+## Standardized coefficients
+
+Uses *std_coef_fn.R*.
+
+```{r}
+std_coef_2016 <- fiveway_2016 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
+
+std_coef_2013 <- fiveway_2013 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
+
+std_coef_2010 <- fiveway_2010 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
+
+std_coef_2007 <- fiveway_2007 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
+
+std_coef_2004 <- fiveway_2004 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
+
+std_coef_2001 <- fiveway_2001 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
+
+```
+
+```{r}
+## Combine and add variable names
+name_vars <- data.frame(var = 1:ncol(x16), varname = names(x16))
+
+std_coef_all <- rbind(std_coef_2016 %>% mutate(year = "2016"), 
+                      std_coef_2013 %>% mutate(year = "2013"),
+                      std_coef_2010 %>% mutate(year = "2010"), 
+                      std_coef_2007 %>% mutate(year = "2007"), 
+                      std_coef_2004 %>% mutate(year = "2004"), 
+                      std_coef_2001 %>% mutate(year = "2001")) %>% 
+  rename(var = vars) %>% 
+  left_join(name_vars, by = "var")
+
+#std_coef_all %>%
+#  filter(year == "2016") %>% 
+#  mutate(snr = avg_coef/(variance_coef^0.5)) %>% #signal to noise ratio
+#  ggplot(aes(x=reorder(varname %>% as.character(), snr), y=snr)) + 
+#  ggplot(aes(x=reorder(varname %>% as.character(), abs(-avg_coef)), y=abs(avg_coef))) + 
+#  geom_line(aes(group = varname)) +
+#  geom_point(aes(col = year, label = varname)) + 
+#  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + facet_wrap(~year)
+
+std_coef_all %>% 
+  arrange(year, -abs(avg_coef)) %>% 
+  group_by(year) %>% 
+  select(varname, avg_coef, year) %>% 
+  top_n(wt = abs(avg_coef), n = 5) %>% 
+  group_by(varname) %>% 
+  count(n = n())
+```
+
+## Begin
+
+We begin this chapter by making one thing absolutely clear. Full reality cannot be included in a model [@BurnhamAnderson2002]. Rather, we seek to estimate a good model to yield an estimate the impacts of socio-demographics, based on the empirical data in hand. 
+
+Even after reducing the dimension of our data set, we still have 30 possible predictors to choose from, and only 150 observations. Our approach in estimating a *good* model is dependent on variable selection. We consider two methods of determining variable importance, an information-theoretic approach using Akaike Weights [@BurnhamAnderson2002], and the comparison of (standardized) regression coefficients. There is no consensus as to which method should be preferred (although opinions do differ - see @Gillingham17 and @GiamOlden16).
+
+To commence our search, we run all possible five variable regressions from the possible 30 predictors, for each election. We will analyse these models, using these two approaches, to draw conclusions on variable importance - so that we can eventually build a single model that serves as a *good* approximation.
+
+*In an ideal world with infinite computing power, we would run OLS regressions with all possible combinations of the covariates in order to better understand how estimated effects of variables are affected by the presence of other variable combinations.*
+
+## Akaike Weights
+This approach is fundamentally driven by Akaike's information criterion (AIC) [@Akaike73], which uses Kullback-Leibler (K-L) information as a basis for model selection [@BurnhamAnderson2002]. K-L information, $I$, for a true model $f$ and approximating model $g$ is given by:
+
+$$I(f,g) = \int f(x) \log \Big( \frac {f(x)} {g(x|\theta)} \Big) dx$$ 
+The K-L information can be interpreted as the information lost when $g$ is used to approximate $f$. Minimizing K-L distance is our goal in determining best fit, which is what we do by choosing a model (from a set) with minimum AIC.
+
+By comparing the AIC of each model in the set with the minimum (optimal) AIC, we get a measure of relative information lost, and hence performance. Let $\Delta_i = AIC_i - AIC_{min}$, which is the difference in AIC between model $i$ and the minimum AIC in the model set. Akaike weights for each model, $w_i$, are then calculated as follows:
+
+$$w_i = \frac {\exp(-\frac{1}{2}\Delta_i)} {\sum_{r=1} ^R \exp(-\frac{1}{2}\Delta_r)}$$
+
+The numerator can be interpreted as the likelihood of model $i$, and hence $w_i$ serves as a comparitive measure of evidence in favor of model $i$ being the K-L optimum for given set [@BurnhamAnderson2002]. This can be thought of the posterior probabilities in a Bayesian approach with each model having equal prior probabilities. Relative variable importance can then be estimated by taking the sum of Akaike weights across models in which that variable appears. Let this sum be denoted $sw_j$, for variable $j$. 
 
 
+
+
+
+
+# Can we even do this?
+
+Testing all possible models can be used to generate a set of best models as long as there is an ecological justification why these models make sense.
+
+Exploratory analysis using stepwise or model selection based on all possible models cannot be reliably made (Grace 2006).
+
+Hypothesis set (of models) is ususally (often) informed by existing research.
+
+
+# Junk
+
+
+Much of the techniques used for multimodel inference in this study are predominantly used in ecological studies.
+
+Our aim is to determine variable importance using the sets of five variable models we have obtained for each election. We explore two approaches. The first ranks variable importance using Akaike Weights, which is @BurnhamAnderson2002 using Akaike Weights 
+
+
+
+## What are the top/acceptable models?
+
+### A little bit of likelihood theory
+
+Akaike weight, $w_i$, is the weight of evidence in favor of model $i$ being the Kullback-Leibler optimum for given set (Burnham and Anderson, 2002). By minimizing K-L information, we are reducing the information lost by using model $g$ to approximate the true $f$ (see page 51).
+
+The difference in AIC between model $i$ and the minimum AIC in the model set is $\Delta_i = AIC_i - AIC_{min}$. 
+
+Akaike weights (Burnham and Anderson, 2002) are assigned to each model, which are calculated:
+$$w_i = \frac {\exp(-\frac{1}{2}\Delta_i)} {\sum_{r=1} ^R \exp(-\frac{1}{2}\Delta_r)}$$
+
+The weight represents the posterior probability that model $i$ is our best model.
+
+### Variable importance
+pg 194-195
+For each variable, sum the Akaike weights that include that variable to get a measure of variable importance.
+- Important: this can only be used when there is an equal number of models that contain this variable. This means I can't directly apply this to the top 100 AIC. Must apply to the all 5 way models.
+
+This is refuted by Gillingham and Dechaume-Moncharmont (2017), who propose the used of model-averaged standardised parameter estimates. See how they compare across the two methods. (Add to lit review!).
+
+# Other Plots
+
+Variable importance using Akaike weights. Plots of weight sums for each year.
+```{r}
 # Plot all together
 var_imp_all %>% 
 #  filter(year == "2016") %>% 
@@ -219,115 +326,8 @@ var_imp_all %>%
 #  filter(year == "2016") %>% 
   ggplot(aes(x=varname, y=coef_wavg)) + geom_jitter(aes(col = year, label = year), width = 0.2, size = 2) + geom_line(aes(group = varname), col = "blue", alpha = 0.5) + theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 
-# best 5 var model
-#best5models <- rbind(
-#(fiveway_2016 %>% arrange(AIC))[1,] %>% mutate(year = "2016"),
-#(fiveway_2013 %>% arrange(AIC))[1,] %>% mutate(year = "2013"),
-#(fiveway_2010 %>% arrange(AIC))[1,] %>% mutate(year = "2010"),
-#(fiveway_2007 %>% arrange(AIC))[1,] %>% mutate(year = "2007"),
-#(fiveway_2004 %>% arrange(AIC))[1,] %>% mutate(year = "2004"),
-#(fiveway_2001 %>% arrange(AIC))[1,] %>% mutate(year = "2001")
-#)
 ```
 
-## Sum of Akaike Weights for Most Imporant variables
-
-```{r}
-# Top 6 variables
-var_imp_all %>% 
-  group_by(year) %>% 
-  top_n(n = 5, wt = sum_w) %>% View
-
-```
-
-
-### Fiveway
-2001: Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, CurrentlyStudying, LFRet
-2004: Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, Educ, Extractive
-2007: Born_SE_Europe, ManagerAdminClericalSales, Extractive, Born_UK, OneParent_House
-2010: ManagerAdminClericalSales, Extractive, Born_SE_Europe, RentLoan, NoReligion
-2013: ManagerAdminClericalSales, Extractive, Born_SE_Europe, RentLoan, LFRet
-2016: ManagerAdminClericalSales, Extractive, Born_SE_Europe, LFRet, RentLoan
-
-Superset (10): Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, CurrentlyStudying, LFRet, Extractive, Educ, Born_UK, RentLoan, NoReligion
-
-### Fourway
-2001: Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, CurrentlyStudying
-2004: Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, Educ
-2007: Born_SE_Europe, ManagerAdminClericalSales, Extractive, Born_UK
-2010: ManagerAdminClericalSales, Extractive, Born_SE_Europe, RentLoan
-2013: ManagerAdminClericalSales, Extractive, Born_SE_Europe, *PropertyMarr*
-2016: ManagerAdminClericalSales, Extractive, Born_SE_Europe, LFRet
-
-Superset (10): Born_SE_Europe, ManagerAdminClericalSales, OneParent_House, CurrentlyStudying, LFRet, Extractive, Educ, Born_UK, RentLoan, PropertyMarr
-
-### Threeway
-2001: Born_SE_Europe, ManagerAdminClericalSales, OneParent_House
-2004: Born_SE_Europe, ManagerAdminClericalSales, Extractive
-2007: Born_SE_Europe, ManagerAdminClericalSales, Extractive
-2010: ManagerAdminClericalSales, Extractive, Born_SE_Europe
-2013: ManagerAdminClericalSales, Extractive, Born_SE_Europe
-2016: ManagerAdminClericalSales, Extractive, Born_SE_Europe
-
-Superset (4): ManagerAdminClericalSales, Extractive, Born_SE_Europe, OneParent_House
-
-
-## Next steps
-Write a bit about the Akaike weights and how summing infers variable importance. Look at the distribution of weights for the 5 variable models. We find that the model with minimum AIC dominates the weights, so it may not be such a good measure.
-
-Let's try looking at the standardized coefficients.
-
-## Standardized coefficients
-
-Uses *std_coef_fn.R*.
-
-```{r}
-#std_coef_2016 <- std_coef_fn(fiveway_2016)
-std_coef_2013 <- std_coef_fn(fiveway_2013)
-std_coef_2010 <- std_coef_fn(fiveway_2010)
-std_coef_2007 <- std_coef_fn(fiveway_2007)
-std_coef_2004 <- std_coef_fn(fiveway_2004)
-std_coef_2001 <- std_coef_fn(fiveway_2001)
-
-#save(std_coef_2016, file = "./Clean-Data/std_coef_2016.rda")
-save(std_coef_2013, file = "./Clean-Data/std_coef_2013.rda")
-save(std_coef_2010, file = "./Clean-Data/std_coef_2010.rda")
-save(std_coef_2007, file = "./Clean-Data/std_coef_2007.rda")
-save(std_coef_2004, file = "./Clean-Data/std_coef_2004.rda")
-save(std_coef_2001, file = "./Clean-Data/std_coef_2001.rda")
-```
-
-```{r}
-## Combine and add variable names
-name_vars <- data.frame(var = 1:ncol(x16), varname = names(x16))
-
-std_coef_all <- rbind(std_coef_2016 %>% mutate(year = "2016"), 
-                      std_coef_2013 %>% mutate(year = "2013"),
-                      std_coef_2010 %>% mutate(year = "2010"), 
-                      std_coef_2007 %>% mutate(year = "2007"), 
-                      std_coef_2004 %>% mutate(year = "2004"), 
-                      std_coef_2001 %>% mutate(year = "2001")) %>% 
-  rename(var = var_num) %>% 
-  left_join(name_vars, by = "var")
-
-
-std_coef_all %>%
-#  filter(year == "2016") %>% 
-#  mutate(snr = avg_coef/(variance_coef^0.5)) %>% #signal to noise ratio
-#  ggplot(aes(x=reorder(varname %>% as.character(), snr), y=snr)) + 
-  ggplot(aes(x=reorder(varname %>% as.character(), abs(-avg_coef)), y=abs(avg_coef))) + 
-  geom_line(aes(group = varname)) +
-  geom_point(aes(col = year, label = varname)) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + facet_wrap(~year)
-
-std_coef_all %>% 
-  arrange(year, -abs(avg_coef)) %>% 
-  group_by(year) %>% 
-  select(varname, avg_coef, year) %>% 
-  top_n(wt = abs(avg_coef), n = 5) %>% 
-  group_by(varname) %>% 
-  count(n = n())
-```
 
 Jittering all coefficient estimates
 ```{r}
@@ -372,37 +372,8 @@ allXway_std_coef_2016 %>% left_join(name_vars, by = "var") %>%
 ```
 
 
+# More on standardized coefficients
 
-## Begin
-
-We begin this chapter by making one thing absolutely clear. Full reality cannot be included in a model [@BurnhamAnderson2002]. Rather, we seek to estimate a good model to yield an estimate the impacts of socio-demographics, based on the empirical data in hand. 
-
-Even after reducing the dimension of our data set, we still have 30 possible predictors to choose from, and only 150 observations. Our approach in estimating a *good* model is dependent on variable selection. We consider two methods of determining variable importance, an information-theoretic approach using Akaike Weights [@BurnhamAnderson2002], and the comparison of (standardized) regression coefficients. There is no consensus as to which method should be preferred (although opinions do differ - see @Gillingham17 and @GiamOlden16).
-
-To commence our search, we run all possible five variable regressions from the possible 30 predictors, for each election. We will analyse these models, using these two approaches, to draw conclusions on variable importance - so that we can eventually build a single model that serves as a *good* approximation.
-
-*In an ideal world with infinite computing power, we would run OLS regressions with all possible combinations of the covariates in order to better understand how estimated effects of variables are affected by the presence of other variable combinations.*
-
-## Akaike Weights
-This approach is fundamentally driven by Akaike's information criterion (AIC) [@Akaike73], which uses Kullback-Leibler (K-L) information as a basis for model selection [@BurnhamAnderson2002]. K-L information, $I$, for a true model $f$ and approximating model $g$ is given by:
-
-$$I(f,g) = \int f(x) \log \Big( \frac {f(x)} {g(x|\theta)} \Big) dx$$ 
-The K-L information can be interpreted as the information lost when $g$ is used to approximate $f$. Minimizing K-L distance is our goal in determining best fit, which is what we do by choosing a model (from a set) with minimum AIC.
-
-By comparing the AIC of each model in the set with the minimum (optimal) AIC, we get a measure of relative information lost, and hence performance. Let $\Delta_i = AIC_i - AIC_{min}$, which is the difference in AIC between model $i$ and the minimum AIC in the model set. Akaike weights for each model, $w_i$, are then calculated as follows:
-
-$$w_i = \frac {\exp(-\frac{1}{2}\Delta_i)} {\sum_{r=1} ^R \exp(-\frac{1}{2}\Delta_r)}$$
-
-The numerator can be interpreted as the likelihood of model $i$, and hence $w_i$ serves as a comparitive measure of evidence in favor of model $i$ being the K-L optimum for given set [@BurnhamAnderson2002]. This can be thought of the posterior probabilities in a Bayesian approach with each model having equal prior probabilities. Relative variable importance can then be estimated by taking the sum of Akaike weights across models in which that variable appears. Let this sum be denoted $sw_j$, for variable $j$. 
-
-
-
-
-
-
-
-
-@BurnhamAnderson2002 explains in 
 
 
 ## Standardized Coefficients
@@ -482,44 +453,3 @@ interaction_SC_df %>%
 ```
 
 Including interactions does not change our conclusions of variable importance significantly. The most important variables stay mostly similar (using 2016 as our test).
-
-
-# Can we even do this?
-
-Testing all possible models can be used to generate a set of best models as long as there is an ecological justification why these models make sense.
-
-Exploratory analysis using stepwise or model selection based on all possible models cannot be reliably made (Grace 2006).
-
-Hypothesis set (of models) is ususally (often) informed by existing research.
-
-
-# Junk
-
-
-Much of the techniques used for multimodel inference in this study are predominantly used in ecological studies.
-
-Our aim is to determine variable importance using the sets of five variable models we have obtained for each election. We explore two approaches. The first ranks variable importance using Akaike Weights, which is @BurnhamAnderson2002 using Akaike Weights 
-
-
-
-## What are the top/acceptable models?
-
-### A little bit of likelihood theory
-
-Akaike weight, $w_i$, is the weight of evidence in favor of model $i$ being the Kullback-Leibler optimum for given set (Burnham and Anderson, 2002). By minimizing K-L information, we are reducing the information lost by using model $g$ to approximate the true $f$ (see page 51).
-
-The difference in AIC between model $i$ and the minimum AIC in the model set is $\Delta_i = AIC_i - AIC_{min}$. 
-
-Akaike weights (Burnham and Anderson, 2002) are assigned to each model, which are calculated:
-$$w_i = \frac {\exp(-\frac{1}{2}\Delta_i)} {\sum_{r=1} ^R \exp(-\frac{1}{2}\Delta_r)}$$
-
-The weight represents the posterior probability that model $i$ is our best model.
-
-### Variable importance
-pg 194-195
-For each variable, sum the Akaike weights that include that variable to get a measure of variable importance.
-- Important: this can only be used when there is an equal number of models that contain this variable. This means I can't directly apply this to the top 100 AIC. Must apply to the all 5 way models.
-
-This is refuted by Gillingham and Dechaume-Moncharmont (2017), who propose the used of model-averaged standardised parameter estimates. See how they compare across the two methods. (Add to lit review!).
-
-

@@ -7,17 +7,18 @@ output: html_document
 
 ```{r}
 library(tidyverse)
-knitr::opts_knit(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
+knitr::opts_knit$set(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
 load("./Clean-Data/data_mod.rda")
 
 ```
 
 # Supersets determined by Akaike weights
 
-Choosing the top 6 from each year, create a superset.
+
+Choosing the top 5 from each year, create a superset.
 
 ```{r}
-# Top 6 variables
+# Top 5 variables
 superset_AW_vars <- var_imp_all %>% 
   group_by(year) %>% 
   top_n(n = 5, wt = sum_w) %>%
@@ -25,11 +26,11 @@ superset_AW_vars <- var_imp_all %>%
   select(var, varname) %>% 
   unique()
 
-superset_AW_by_year <- var_imp_all %>% 
-  group_by(year) %>% 
-  top_n(n = 5, wt = sum_w) %>% 
-  arrange(-sum_w) %>% 
-  mutate(imp = 1:5)
+#superset_AW_by_year <- var_imp_all %>% 
+#  group_by(year) %>% 
+#  top_n(n = 5, wt = sum_w) %>% 
+#  arrange(-sum_w) %>% 
+#  mutate(imp = 1:5)
 
 ```
 
@@ -38,7 +39,7 @@ superset_AW_by_year <- var_imp_all %>%
 
 # Supersets determined by Standardized Coefficients
 
-Choosing the top 6 from each year, create a superset.
+Choosing the top 5 from each year, create a superset.
 
 ```{r}
 # Top 6 variables
@@ -46,25 +47,22 @@ superset_SC_vars <- std_coef_all %>%
   group_by(year) %>% 
   top_n(n = 5, wt = abs(avg_coef)) %>%
   ungroup() %>% 
-  select(var, varname) %>% 
-  group_by(varname) %>% 
-  count(n = n())
+  select(var, varname)  %>% 
+  unique()
 
-superset_SC_by_year <- std_coef_all %>% 
-  group_by(year) %>% 
-  top_n(n = 5, wt = abs(avg_coef)) %>% 
-  select(var, avg_coef, varname, year) %>% 
-  arrange(-abs(avg_coef)) %>% 
-  mutate(imp = 1:5)
+#superset_SC_by_year <- std_coef_all %>% 
+#  group_by(year) %>% 
+#  top_n(n = 5, wt = abs(avg_coef)) %>% 
+#  select(var, avg_coef, varname, year) %>% 
+#  arrange(-abs(avg_coef)) %>% 
+#  mutate(imp = 1:5)
 ```
 
 # Creating the super-set
-Added Incomes and OtherLanguageHome
+Added Unemployment and OtherLanguageHome
 
 ```{r}
-superset <- superset_AW_vars
-superset[11:12, 1] <- c(20, 27)
-superset[11:12, 2] <- c("OtherLanguageHome", "Incomes")
+superset <- bind_rows(superset_AW_vars, superset_SC_vars) %>% group_by(varname) %>% unique()
 ```
 
 
@@ -75,41 +73,35 @@ Run a regression each year using this superset
 fit_ss_16 <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2016") %>% 
-#                  select(-c(year, Swing, Election_Division)) %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
 fit_ss_13 <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2013") %>% 
-#                  select(-c(year, Swing, Election_Division)) %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
 fit_ss_10 <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2010") %>% 
-#                  select(-c(year, Swing, Election_Division)) %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
 fit_ss_07 <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2007") %>% 
- #                 select(-c(year, Swing, Election_Division)) %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
 fit_ss_04 <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2004") %>% 
- #                 select(-c(year, Swing, Election_Division)) %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
 fit_ss_01 <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2001") %>% 
- #                 select(-c(year, Swing, Election_Division)) %>% 
                   select(Perc_LNP, (superset$varname %>% as.character)))
 
 # Extracting coefficients
-ss_AW_coef = data.frame(varname = names(fit_ss_01$coefficients),
+ss_coef = data.frame(varname = names(fit_ss_01$coefficients),
                      year = as.character(rep(seq(2001, 2016, by = 3), 
                                              each = length(names(fit_ss_01$coefficients)))),
                      coef =
@@ -121,19 +113,12 @@ ss_AW_coef = data.frame(varname = names(fit_ss_01$coefficients),
                          fit_ss_16$coefficients))
 
 # Plot
-ss_AW_coef %>% 
+ss_coef %>% 
   filter(varname != "(Intercept)") %>% 
   ggplot(aes(x=varname, y=coef)) +
   geom_point(aes(col = year), size = 2.5, alpha = 0.8) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 
-# R2 of models
-summary(fit_ss_01)$r.squared
-summary(fit_ss_04)$r.squared
-summary(fit_ss_07)$r.squared
-summary(fit_ss_10)$r.squared
-summary(fit_ss_13)$r.squared
-summary(fit_ss_16)$r.squared
 ```
 
 # Plotting coefficients over time
@@ -152,7 +137,7 @@ all_coefs %>%
   filter(term != "(Intercept)") %>% 
   ggplot(aes(x = year, y = estimate)) + 
   geom_hline(aes(yintercept = 0), alpha = 0.5) + 
-  geom_line() + 
+  geom_line(aes(group = term)) + 
   facet_wrap(~term)
 
 ## Voting against unemployed
@@ -300,11 +285,61 @@ change_coef_04 <- drop_var(fit_ss_04) %>% mutate(year = "2004")
 change_coef_01 <- drop_var(fit_ss_01) %>% mutate(year = "2001")
 
 bind_rows(change_coef_16, change_coef_13, change_coef_10, change_coef_07, change_coef_04, change_coef_01) %>% 
-  arrange(-abs(diff_estimate)) %>% View
+  arrange(-abs(diff_estimate)) %>% 
+  ggplot(aes(x=omitted_var, y=diff_estimate)) + geom_point(aes(col = year)) + facet_wrap(~term) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 
 ```
 
+Born_SE_Europe
+- Doesn't appear to be strongly dependent on any of the other variables
 
+Born_UK
+- No strong dependencies
+
+CurrentlyStudying
+- Affected by MedianAge
+
+Education
+- Most variables
+
+Extractive
+- Relatively unaffected
+
+ManageAdminClericalSales
+- Nothing strong
+
+Median Age
+- Currently studying, but not strong
+
+No Religion
+- ManagerAdminClericalSales but not strong
+
+OneParent_House
+- Extractive large dependency
+- Unemployed also strong, and changing effect
+
+OtherLanguageHome
+- Born_SE_Europe is huge
+- Small dependence with MedianAge and NoReligion
+
+RentLoan
+- Strongly dependent on Extractive
+- Moderate dependence with Educ and NoReligion
+
+Unemployed
+- Strong with ManagerAdminClericalSales
+- Moderatew ith MedianAge and OneParent_House
+
+I would suggest adding interactions:
+- Born_SE_Europe and OtherLanguageHome
+- Educ and ManagerAdminClericalSales
+- Educ and NoReligion
+- OneParent_House and Extractive
+- RentLoan and Extractive
+- Unemployed and ManagerAdminClericalSales
+- Unemployed and MedianAge
+- 
 
 ## Comparison with single variable regressions
 ```{r}
@@ -317,8 +352,8 @@ onevar_coef <- rbind(oneway_2001 %>% unnest %>% select(vars, coef) %>% mutate(ye
   rename(var = vars) %>% 
   left_join(name_vars, by = "var") %>% mutate(Type = "SingleVarReg") %>% select(-var)
 
-rbind(onevar_coef, ss_AW_coef %>% mutate(Type = "SupersetAW")) %>% 
-  filter(varname != "(Intercept)", varname %in% ss_AW_coef$varname) %>% 
+rbind(onevar_coef, ss_coef %>% mutate(Type = "Superset")) %>% 
+  filter(varname != "(Intercept)", varname %in% ss_coef$varname) %>% 
   ggplot(aes(x = varname, y = coef)) + 
   geom_line(aes(group = varname)) + 
   geom_point(aes(col = Type)) + 

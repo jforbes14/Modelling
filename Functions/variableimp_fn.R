@@ -44,3 +44,4 @@ var_imp <- function(Xway) {
 }
 
 #test <- var_imp(Xway = twoway_2016)
+
