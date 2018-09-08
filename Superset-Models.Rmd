@@ -9,7 +9,8 @@ output: html_document
 library(tidyverse)
 knitr::opts_knit$set(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
 load("./Clean-Data/data_mod.rda")
-
+load("./Clean-Data/var_imp_all.rda")
+load("./Clean-Data/std_coef_all.rda")
 ```
 
 # Supersets determined by Akaike weights
@@ -130,22 +131,20 @@ all_coefs <- bind_rows(tidy(fit_ss_16) %>% mutate(year = "2016"),
                        tidy(fit_ss_10) %>% mutate(year = "2010"), 
                        tidy(fit_ss_07) %>% mutate(year = "2007"), 
                        tidy(fit_ss_04) %>% mutate(year = "2004"), 
-                       tidy(fit_ss_01) %>% mutate(year = "2001"))
+                       tidy(fit_ss_01) %>% mutate(year = "2001")) %>% 
+  mutate(upper95 = estimate + 1.96*std.error, lower95 = estimate - 1.96*std.error)
 
 # Plot
 all_coefs %>% 
   filter(term != "(Intercept)") %>% 
   ggplot(aes(x = year, y = estimate)) + 
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
   geom_hline(aes(yintercept = 0), alpha = 0.5) + 
-  geom_line(aes(group = term)) + 
   facet_wrap(~term)
-
-## Voting against unemployed
-data_mod %>% ggplot(aes(x = Unemployed, y = Perc_LNP)) + geom_point() + facet_wrap(~year)
-  geom_line(aes(group = Election_Division, label = Election_Division))
-
-data_mod %>% filter(Perc_LNP > 55) %>% ggplot(aes(x = year, y = Unemployed)) + geom_line(aes(group = Election_Division, label = Election_Division))
 ```
+
+The plot above shows the significance (T test) of each variable, across years.
+
 
 # Checking which are significant (F test)
 ```{r}
@@ -167,7 +166,8 @@ all_coefs_sig %>%
   geom_line(aes(group = term)) + 
   geom_point(aes(col = (pval_F < 0.05))) + 
   scale_color_manual(values = c("grey50", "magenta")) + 
-  facet_wrap(~term)
+  facet_wrap(~term) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 ```
 
 # Confirm that these match our initial thoughts
@@ -189,11 +189,11 @@ data_mod %>% ggplot(aes(x = Educ, y = Perc_LNP)) + geom_point(aes(label = Electi
 ## Voting against Extractive
 data_mod %>% ggplot(aes(x = Extractive, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
   
-## Voting against Incomes
-data_mod %>% ggplot(aes(x = Incomes, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+## Voting against Unemployed
+data_mod %>% ggplot(aes(x = Unemployed, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 
 ## Voting against LFRet
-data_mod %>% ggplot(aes(x = LFRet, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+data_mod %>% ggplot(aes(x = MedianAge, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 
 ## Voting against ManagerAdminClericalSales
 data_mod %>% ggplot(aes(x = ManagerAdminClericalSales, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
@@ -289,7 +289,79 @@ bind_rows(change_coef_16, change_coef_13, change_coef_10, change_coef_07, change
   ggplot(aes(x=omitted_var, y=diff_estimate)) + geom_point(aes(col = year)) + facet_wrap(~term) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 
+change_coef_16 %>% 
+  gather(key = "Type", value = "Estimate", -c(term, std.error, statistic, p.value, omitted_var, diff_estimate, year)) %>%
+  ggplot(aes(x=omitted_var, y=Estimate)) + geom_point(aes(col = factor(Type))) + facet_wrap(~term) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+
+# Matrix scatterplot
+pairs(data_mod %>% filter(year == 
+    "2016") %>% select(superset$varname %>% as.character))
 ```
+
+
+### Adding interactions
+Record p-value for F test adding a single interaction to each model
+```{r}
+fit = fit_ss_16
+
+interact_F <- function(fit) {
+  data_mod <- fit$model
+  x_names <- names(data_mod)[which(names(data_mod) != "Perc_LNP")]
+  
+  pvalues_F <- matrix(nrow = length(x_names), ncol = length(x_names)) %>% as.data.frame()
+  colnames(pvalues_F) <- x_names
+  
+  pvalues_F <- pvalues_F %>% 
+    mutate(interact_var1 = x_names)
+  
+
+  for (i in 1:length(x_names)) {
+    
+    for (j in 1:length(x_names)) {
+      
+      if (i > j) {
+      formula = paste0(
+        paste0(
+        paste0("Perc_LNP ~ . + ", x_names[i]), ":"), x_names[j])
+      
+      mod <- lm(formula, data_mod)
+      
+      suppressWarnings(tidy_drop <- tidy(drop1(mod, test = "F")))
+    
+      pval = tidy_drop$p.value[grep(":", tidy_drop$term)]
+      
+      pvalues_F[i,j] <- pval
+      
+      }
+      
+    }
+    
+  }
+  
+  pvalues_F <- pvalues_F %>% 
+    gather(key = "interact_var2", value = "pvalue", -interact_var1) %>% 
+    filter(!is.na(pvalue))
+  
+  return(pvalues_F)
+}
+
+int16 <- interact_F(fit_ss_16) %>% mutate(year = "2016")
+int13 <- interact_F(fit_ss_13) %>% mutate(year = "2013") 
+int10 <- interact_F(fit_ss_10) %>% mutate(year = "2010") 
+int07 <- interact_F(fit_ss_07) %>% mutate(year = "2007") 
+int04 <- interact_F(fit_ss_04) %>% mutate(year = "2004") 
+int01 <- interact_F(fit_ss_01) %>% mutate(year = "2001") 
+
+bind_rows(int01, int04, int07, int10, int13, int16) %>% 
+  filter(pvalue < 0.001) %>% 
+  group_by(interact_var1, interact_var2) %>% 
+  summarise(n = n()) %>% View
+
+
+```
+
+
 
 Born_SE_Europe
 - Doesn't appear to be strongly dependent on any of the other variables
@@ -340,6 +412,10 @@ I would suggest adding interactions:
 - Unemployed and ManagerAdminClericalSales
 - Unemployed and MedianAge
 - 
+
+
+To check the sensitivity of our estimates to omitted variable bias, we observe the change in coefficients when adding to the model a single unused predictor. We see that OtherLanguageHome is highly endogenous, mostly due to its correlation with the omitted regions of birth, and religions. Education is also strongly affected by the omitted job industries. 
+
 
 ## Comparison with single variable regressions
 ```{r}
@@ -396,3 +472,63 @@ CurrentlyStudying: Initially supportive of Labor, but steep upwards trend toward
 MedianAge: Liberal in 2004, Labor 2007, Liberal 2010, then strong movements towards Labor.
 NoReligion: Always more associated with Labor. 2010 election big spike towards Labor. Now moving back towards zero - but this could also be due to more people identifying as Labor.
 Transformative: Spike for Liberal in 2004, drop in 2007, steady increase since.
+
+
+
+
+## Omitted variable bias
+
+```{r}
+fit = fit_ss_01
+Year = 2001
+
+OVB <- function(fit, data_mod, Year) {
+  data_fit <- fit$model
+  
+  data_om <- data_mod %>% 
+    filter(year == as.character(Year), !is.na(Perc_LNP)) %>% 
+    select(-c(names(data_fit), year, Swing, Election_Division))
+  
+for (j in 1:ncol(data_om)) {
+  omitted_name <- names(data_om)[j]
+  
+  data_use <- bind_cols(data_fit, data_om %>% select(omitted_name))
+  
+  mod <- lm(Perc_LNP ~ ., data = data_use)
+  
+  mod_out <- tidy(mod) %>% 
+    mutate(omitted_var = omitted_name) %>% 
+    right_join(tidy(fit) %>% select(term, estimate) %>% rename(full_estimate = estimate), by = "term") %>% 
+    mutate(diff_estimate = full_estimate - estimate)
+  
+  if (j == 1) {
+    mod_all <- mod_out
+  } else {
+    mod_all <- rbind(mod_all, mod_out)
+  }
+  
+    
+}
+  
+  mod_all <- mod_all %>% 
+    arrange(-abs(diff_estimate)) %>% 
+    filter(term != "(Intercept)") %>% 
+    mutate(year = as.character(Year))
+  
+  return(mod_all)
+}
+
+omitted_var_bias <- bind_rows(omitted_var_bias_16 <- OVB(fit_ss_16, data_mod, 2016),
+                              omitted_var_bias_13 <- OVB(fit_ss_13, data_mod, 2013),
+                              omitted_var_bias_10 <- OVB(fit_ss_10, data_mod, 2010),
+                              omitted_var_bias_07 <- OVB(fit_ss_07, data_mod, 2007),
+                              omitted_var_bias_04 <- OVB(fit_ss_04, data_mod, 2004),
+                              omitted_var_bias_01 <- OVB(fit_ss_01, data_mod, 2001))
+
+# Plot to see which variables are affected by OVB
+omitted_var_bias %>% 
+  ggplot(aes(x = omitted_var, y = diff_estimate)) + 
+  geom_point(aes(col = year), alpha = 0.8) +
+  facet_wrap(~term) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+```
