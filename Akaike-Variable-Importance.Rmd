@@ -169,7 +169,7 @@ name_vars <- data.frame(var = 1:ncol(x16), varname = names(x16))
 var_imp_all <- rbind(var_imp_16, var_imp_13, var_imp_10, 
                      var_imp_07, var_imp_04, var_imp_01) %>% 
   left_join(name_vars, by = "var")
-save(var_imp_all, file = "~/Documents/R/Modelling/data/var_imp_all.rda")
+save(var_imp_all, file = "./Clean-Data/var_imp_all.rda")
 
 ```
 
@@ -223,6 +223,8 @@ std_coef_all <- rbind(std_coef_2016 %>% mutate(year = "2016"),
                       std_coef_2001 %>% mutate(year = "2001")) %>% 
   rename(var = vars) %>% 
   left_join(name_vars, by = "var")
+
+save(std_coef_all, file = "./Clean-Data/std_coef_all.rda")
 
 #std_coef_all %>%
 #  filter(year == "2016") %>% 
