@@ -277,13 +277,13 @@ change_coef_07 <- drop_var(fit_ss_07) %>% mutate(year = "2007")
 change_coef_04 <- drop_var(fit_ss_04) %>% mutate(year = "2004")
 change_coef_01 <- drop_var(fit_ss_01) %>% mutate(year = "2001")
 
-change_coef_all <- bind_rows(change_coef_16, change_coef_13, change_coef_10, change_coef_07, change_coef_04, change_coef_01) 
+change_coef_all <- bind_rows(change_coef_16, change_coef_13, change_coef_10, change_coef_07, change_coef_04, change_coef_01) %>% mutate(lower95 = estimate - 1.96*std.error, upper95 = estimate + 1.96*std.error)
 ```
 
 ### Born in South/Eastern Europe
 ```{r}
 all_coefs %>% filter(term == "Born_SE_Europe") %>% 
-  ggplot(aes(x=year, y=estimate)) +
+  ggplot(aes(x=year, y=estimate)) + 
   geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
   geom_hline(aes(yintercept = 0), alpha = 0.5) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
@@ -333,9 +333,9 @@ To test for confounding, we re-fit the model with dropping a single variable, an
 change_coef_all %>% 
   filter(term == "CurrentlyStudying") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
-  geom_point() +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
   geom_hline(aes(yintercept = full_estimate), col = "blue") + 
-  geom_hline(aes(yintercept = 0), col = "grey") + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
 
@@ -362,9 +362,9 @@ Omitting NoReligion results in a stronger estimated effect in support for Labor 
 change_coef_all %>% 
   filter(term == "Educ") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
-  geom_point() +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
   geom_hline(aes(yintercept = full_estimate), col = "blue") + 
-  geom_hline(aes(yintercept = 0), col = "grey") + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
 ```
@@ -417,9 +417,9 @@ We expect there to be a strong relationship between Labor party support and high
 change_coef_all %>% 
   filter(term == "Unemployed") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
-  geom_point() +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
   geom_hline(aes(yintercept = full_estimate), col = "blue") + 
-  geom_hline(aes(yintercept = 0), col = "grey") + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
 
@@ -458,9 +458,9 @@ Negative effects estimated, but are only significant in 2010 and 2013. From the 
 change_coef_all %>% 
   filter(term == "NoReligion") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
-  geom_point() +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
   geom_hline(aes(yintercept = full_estimate), col = "blue") + 
-  geom_hline(aes(yintercept = 0), col = "grey") + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
 
@@ -499,9 +499,9 @@ Model estimates insignificant effect, whereas the raw data indicates there shoul
 change_coef_all %>% 
   filter(term == "OtherLanguageHome") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
-  geom_point() +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
   geom_hline(aes(yintercept = full_estimate), col = "blue") + 
-  geom_hline(aes(yintercept = 0), col = "grey") + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
 ```
@@ -524,9 +524,9 @@ Expect insignificant effect from the raw plots. In 2010 we see significant suppo
 change_coef_all %>% 
   filter(term == "OtherLanguageHome") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
-  geom_point() +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
   geom_hline(aes(yintercept = full_estimate), col = "blue") + 
-  geom_hline(aes(yintercept = 0), col = "grey") + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
 ```
@@ -535,183 +535,37 @@ change_coef_all %>%
 
 
 
-
-
-
-
-
 ------------------------------------------------------------------------------------------
 
+# Stories from the data
 
-# Extra
+## Education and Students
 
-## Adding interactions
-Record p-value for F test adding a single interaction to each model
+Education policy has always been key policy issue in the weeks leading up to a federal election. The Labor party, more often than not, campaign with policies that boost funding for education, and the coalition will usually propose alternatives with less funding or aim to match particular objectives - for example, the "Better Schools Plan" in 2013. It would be reasonable to expect that electorates with higher education levels, and higher student populations, would be inclined to support Labor *every* election, which is what we observe in our primary plots. 
+
+After adjusting for the other socio-demographics, we find that education levels are only related to support of the Labor party in the 2004 and 2007 elections, with other years being insignificant at the 5% level. If we omit the prevelence of atheism (NoReligion) from our model, the effect of education in favour of Labor increases to be significant in 2010 and 2013. The same is true for the proportion of people working in "extractive" jobs, in the same years. This indicates that our initial thoughts on the effect education levels would have is being confounded by these other factors. We are not laying any causal claims here, but rather indicating that our expectations about aggregate behaviour can be simeltaneously determined by grouping characteristics together. Essentially, our intuitions are very susceptible to omitted variable bias!
+
+Similarly, we see higher student proportions being significantly related to increased Liberal support in 2007 and 2010. Omitting the age profile of the electorate (MedianAge) would lead to significant support for Labor in 2001, and would change our conclusions from significant to insignificant in 2007 and 2010. This is not surprising, as younger people are typically students, so higher student populations should mean lower median age, and these two are highly correlated ($\rho = -0.683$).
+
+## Unemployment
+
+Our model indicates that in the 2001, 2004 and 2007 elections, higher unemployment rates were linked with more support for the Labor party. Interestingly, in all of those elections the Liberal party was the incumbent party with John Howard as Prime Minister. From 2010 onwards, education has not had a significant effect, which is not what we would expect from the raw data plots. If we omit "office jobs", the estimated coefficient of unemployment becomes more negative, but remains insignificant in these three elections. Therefore, we conclude that the unemployment rate was a significant determinant in two-party preference for 2001, 2004 and 2007 elections, but has since become insignificant, after adjusting for other socio-demographics - contrary to expectations.
+
+## Other Language at Home
+
+From the Tampa affair in 2001, when John Howard diverted the MV Tampa to Nauru (carrying 400 Afghani refugees), to the "stop the boats" mantra of the 2013 election, the Liberal party have consistently campaigned on policies of stricter immigration. We expect electorates with high proportions of people speaking languages other than English at home to also have high proportions of migrants (correlation $\rho = 0.90$), so OtherLanguageHome should have a positive relationship with voting Labor - which we see in the raw plots. After accounting for (some) birthplace demographics, we find that language at home has no significant effect on two-party preference.
+
+
 ```{r}
-fit = fit_ss_16
+load("~/Documents/R/Data/Clean/abs_all.rda")
+abs_all <- abs_all %>% mutate(Born_Australia = 100 - Born_UK - Born_SE_Europe - Born_MidEast - Born_Asia - BornElsewhere) 
 
-interact_F <- function(fit) {
-  data_mod <- fit$model
-  x_names <- names(data_mod)[which(names(data_mod) != "Perc_LNP")]
-  
-  pvalues_F <- matrix(nrow = length(x_names), ncol = length(x_names)) %>% as.data.frame()
-  colnames(pvalues_F) <- x_names
-  
-  pvalues_F <- pvalues_F %>% 
-    mutate(interact_var1 = x_names)
-  
-
-  for (i in 1:length(x_names)) {
-    
-    for (j in 1:length(x_names)) {
-      
-      if (i > j) {
-      formula = paste0(
-        paste0(
-        paste0("Perc_LNP ~ . + ", x_names[i]), ":"), x_names[j])
-      
-      mod <- lm(formula, data_mod)
-      
-      suppressWarnings(tidy_drop <- tidy(drop1(mod, test = "F")))
-    
-      pval = tidy_drop$p.value[grep(":", tidy_drop$term)]
-      
-      pvalues_F[i,j] <- pval
-      
-      }
-      
-    }
-    
-  }
-  
-  pvalues_F <- pvalues_F %>% 
-    gather(key = "interact_var2", value = "pvalue", -interact_var1) %>% 
-    filter(!is.na(pvalue))
-  
-  return(pvalues_F)
-}
-
-int16 <- interact_F(fit_ss_16) %>% mutate(year = "2016")
-int13 <- interact_F(fit_ss_13) %>% mutate(year = "2013") 
-int10 <- interact_F(fit_ss_10) %>% mutate(year = "2010") 
-int07 <- interact_F(fit_ss_07) %>% mutate(year = "2007") 
-int04 <- interact_F(fit_ss_04) %>% mutate(year = "2004") 
-int01 <- interact_F(fit_ss_01) %>% mutate(year = "2001") 
-
-bind_rows(int01, int04, int07, int10, int13, int16) %>% 
-  filter(pvalue < 0.001) %>% 
-  group_by(interact_var1, interact_var2) %>% 
-  summarise(n = n()) %>% View
-
-
+cor(abs_all$Born_Australia, abs_all$OtherLanguageHome)
+cor(abs_all$Born_SE_Europe, abs_all$Born_Asia)
 ```
 
 
 
-Born_SE_Europe
-- Doesn't appear to be strongly dependent on any of the other variables
-
-Born_UK
-- No strong dependencies
-
-CurrentlyStudying
-- Affected by MedianAge
-
-Education
-- Most variables
-
-Extractive
-- Relatively unaffected
-
-ManageAdminClericalSales
-- Nothing strong
-
-Median Age
-- Currently studying, but not strong
-
-No Religion
-- ManagerAdminClericalSales but not strong
-
-OneParent_House
-- Extractive large dependency
-- Unemployed also strong, and changing effect
-
-OtherLanguageHome
-- Born_SE_Europe is huge
-- Small dependence with MedianAge and NoReligion
-
-RentLoan
-- Strongly dependent on Extractive
-- Moderate dependence with Educ and NoReligion
-
-Unemployed
-- Strong with ManagerAdminClericalSales
-- Moderatew ith MedianAge and OneParent_House
-
-I would suggest adding interactions:
-- Born_SE_Europe and OtherLanguageHome
-- Educ and ManagerAdminClericalSales
-- Educ and NoReligion
-- OneParent_House and Extractive
-- RentLoan and Extractive
-- Unemployed and ManagerAdminClericalSales
-- Unemployed and MedianAge
-- 
-
-
-To check the sensitivity of our estimates to omitted variable bias, we observe the change in coefficients when adding to the model a single unused predictor. We see that OtherLanguageHome is highly endogenous, mostly due to its correlation with the omitted regions of birth, and religions. Education is also strongly affected by the omitted job industries. 
-
-
-## Comparison with single variable regressions
-```{r}
-onevar_coef <- rbind(oneway_2001 %>% unnest %>% select(vars, coef) %>% mutate(year = "2001"),
-                     oneway_2004 %>% unnest %>% select(vars, coef) %>% mutate(year = "2004"),
-                     oneway_2007 %>% unnest %>% select(vars, coef) %>% mutate(year = "2007"),
-                     oneway_2010 %>% unnest %>% select(vars, coef) %>% mutate(year = "2010"),
-                     oneway_2013 %>% unnest %>% select(vars, coef) %>% mutate(year = "2013"),
-                     oneway_2016 %>% unnest %>% select(vars, coef) %>% mutate(year = "2016")) %>% 
-  rename(var = vars) %>% 
-  left_join(name_vars, by = "var") %>% mutate(Type = "SingleVarReg") %>% select(-var)
-
-rbind(onevar_coef, ss_coef %>% mutate(Type = "Superset")) %>% 
-  filter(varname != "(Intercept)", varname %in% ss_coef$varname) %>% 
-  ggplot(aes(x = varname, y = coef)) + 
-  geom_line(aes(group = varname)) + 
-  geom_point(aes(col = Type)) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + facet_wrap(~year)
-```
-
-We compare the standardized coefficients from the superset model to those from the single variable regressions to demonstrate the problem of drawing insights from single variable regressions. Single variable regressions are used in previous sociodemographic analyses of Australian federal elections (@StimsonALLPAPERS), but no extensions to include multiple regressors have been previously explored.
-
-In at least one election year, we find that single variable regressions estimate the effects of CurrentlyStudying, NoReligion, Transformative, MedianAge and RentLoan to have mistaken party associations. CurrentlyStudying, RentLoan and Transfomrative would be estimated to have a positive relationships with support for Labor, but once we have appropriately adjusted for other factors (in multiple regression), the relationship moves in support of Liberal. Conversely, higher NoReligion and MedianAge would be said to support Liberal, but adjusting for other factors, either support Labor or are insignificant.
-
-
-## Old interpretations of effects
-
-
-Born_SE_Europe: Each year, electorates with higher proportions of people born in South and Eastern Europe are  more attracted to the Labor party. This fits with our initial inspection of the data.
-
-Born_UK: In only the 2007 and 2010 elections, proportion of people born in the UK was significantly influential in electorate preference, with higher proportions being more associated with the Liberal party. The sign of the relationship does not change over the elections.
-
-CurrentlyStudying: This result contradicts our expectations entirely, as we expected electorates with larger student demographics to have more affiliation with the Labor party. 
-
-Educ: We expected areas with higher education levels to support Labor, which is the effect produced by the models. Throughout 2004-2013, this effect was particularly strong.
-
-Extractive: Electorates with more jobs in agriculture, mining, electricity, gas, water or waste, are strongly affiliated with the coalition. We see a huge spike in effect in 2010, which corresponds with the peak of the mining boom. The consistently strong levels of support are rational, because the Liberal party has policies that favour these industries. 
-
-Incomes: Areas with higher incomes should have a preference for the Liberal party, due to their tax policies being lighter on higher income brackets. We see that in 2001-2007, higher income areas were particularly strong in their support for the Liberal party, but from 2010, this positive effect has weakened.
-
-LFRet: Matches - to be removed.
-
-ManagerAdminClericalSales: Matches
-
-NoReligion: No relationship appears in basic plots, but we expect electorates with more identifying athiests to be more associated with the Labor party, as it is seen as being more socially progressive. We find that from 2010 onwards, this became apparent. What changed in atheist attitudes over time?
-
-OneParent_House: We expect areas with higher proportions of single parent families to be more supportive of Labor. Labor's policies usually are geared towards family benefits and related issues that would be important for areas with high incidence of single parent families. The model shows a consistently strong relationship with Labor support over the years.
-
-OtherLanguageHome: We don't expect this to have any significant effect on two party preferred vote, and the model confirms this. There is only a weak affiliation with the Liberal party, although not significant. Original plots indicate that we should see support for Labor.
-
-RentLoan: Labor policy in 2007 triggered increase in support for Labor, which changed drastically in 2010 - perhaps something to do with negative gearing?
 
 
 
