@@ -123,6 +123,9 @@ all_coefs %>%
   geom_hline(aes(yintercept = 0), alpha = 0.5) + 
   facet_wrap(~term) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+
+save(all_coefs, file = "./Clean-Data/all_coefs.rda")
+
 ```
 
 
@@ -278,6 +281,8 @@ change_coef_04 <- drop_var(fit_ss_04) %>% mutate(year = "2004")
 change_coef_01 <- drop_var(fit_ss_01) %>% mutate(year = "2001")
 
 change_coef_all <- bind_rows(change_coef_16, change_coef_13, change_coef_10, change_coef_07, change_coef_04, change_coef_01) %>% mutate(lower95 = estimate - 1.96*std.error, upper95 = estimate + 1.96*std.error)
+
+save(change_coef_all, file = "./Clean-Data/change_coef_all.rda")
 ```
 
 ### Born in South/Eastern Europe
@@ -571,8 +576,6 @@ In 2010, electorates with higher (median) rental prices and housing loan payment
 ## Extractive
 
 Even in the election before the mining boom began in 2002, areas with more people working in "extractive" industries (mining, gas, water, gas, waste, electricity and agriculture) were significantly more supportive of the coalition. Over the following two elections the two parties did not differ significantly in their policies on natural resources, and we our coefficient estimates do not change much relative to 2001 - remaining significantly positive.
-
-A resource "super profits" tax was proposed by the Labor party in the 2010 election, which would see a 40% tax on "super profits" made from "exploitation of Australia’s non-renewable resources". This was heavily opposed by the Liberal party, and 
 
 In 2010, the Labor party proposed a 40% tax on "super profits" made from ‘the exploitation of Australia’s non-renewable resources’, which was heavily opposed by the Liberal party, who instead offered the Exploration Development Incentive. The mining sector, particularly in Western Australia, vehemently objected to Labor's policy, with Chamber of Minerals and Energy chief executive describing it as a "$\$9$ billion handbreak on the economy". Consequently, we see a huge jump in the effect of extractive jobs in 2010, with estimated coefficient increasing from $2.43$ to $5.63$ - becoming the largest coefficient in the model. Following the end of the mining boom in 2012, the estimated coefficient drops but remains significantly positive in 2013 and 2016.
 

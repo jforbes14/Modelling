@@ -1,0 +1,155 @@
+---
+title: "Stories From Superset Models"
+author: "Jeremy Forbes"
+date: "11/09/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+load("Clean-Data/data_mod.rda")
+load("Clean-Data/all_coefs.rda")
+load("Clean-Data/change_coef_all.rda")
+
+knitr::opts_chunk$set(echo = FALSE, results = FALSE)
+```
+
+# Significance of all coefficients
+
+```{r}
+all_coefs %>% 
+  filter(term != "(Intercept)") %>% 
+  ggplot(aes(x = year, y = estimate)) + 
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  facet_wrap(~term) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+```
+
+Of particular interest:
+
+- CurrentlyStudying and Educ - would expect similar effects
+
+- Extractive - jump in 2010
+
+- Unemployed - change from Labor to insignificant
+
+- OtherLanuageHome - expect to be strong relationship, but is insignificant
+
+# Stories from the data
+
+## Education and Students
+
+```{r}
+all_coefs %>% filter(term %in% c("CurrentlyStudying", "Educ")) %>% 
+  ggplot(aes(x=year, y=estimate)) +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  facet_wrap(~term) +
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+
+## Voting against CurrentlyStudying
+data_mod %>% ggplot(aes(x = Educ, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year) + ggtitle("CurrentlyStudying")
+
+data_mod %>% ggplot(aes(x = CurrentlyStudying, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year) + ggtitle("Educ")
+```
+
+
+```{r}
+change_coef_all %>% 
+  filter(term == "Educ") %>% 
+  ggplot(aes(x=omitted_var, y=estimate)) + 
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
+  facet_wrap(~year) + 
+  ggtitle(label = "Educ") +
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
+
+change_coef_all %>% 
+  filter(term == "CurrentlyStudying") %>% 
+  ggplot(aes(x=omitted_var, y=estimate)) + 
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
+  facet_wrap(~year) + 
+  ggtitle(label = "CurrentlyStudying") +
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
+```
+
+Education policy has always been key policy issue in the weeks leading up to a federal election. The Labor party, more often than not, campaign with policies that boost funding for education, and the coalition will usually propose alternatives with less funding or aim to match particular objectives - for example, the "Better Schools Plan" in 2013. It would be reasonable to expect that electorates with higher education levels, and higher student populations, would be inclined to support Labor *every* election, which is what we observe in our primary plots. 
+
+After adjusting for the other socio-demographics, we find that education levels are only related to support of the Labor party in the 2004 and 2007 elections, with other years being insignificant at the 5% level. If we omit the prevelence of atheism (NoReligion) from our model, the effect of education in favour of Labor increases to be significant in 2010 and 2013. The same is true for the proportion of people working in "extractive" jobs, in the same years. This indicates that our initial thoughts on the effect education levels would have is being confounded by these other factors. We are not laying any causal claims here, but rather indicating that our expectations about aggregate behaviour can be simeltaneously determined by grouping characteristics together. Essentially, our intuitions are very susceptible to omitted variable bias!
+
+Similarly, we see higher student proportions being significantly related to increased Liberal support in 2007 and 2010. Omitting the age profile of the electorate (MedianAge) would lead to significant support for Labor in 2001, and would change our conclusions from significant to insignificant in 2007 and 2010. This is not surprising, as younger people are typically students, so higher student populations should mean lower median age, and these two are highly correlated ($\rho = -0.683$).
+
+
+
+## Unemployment
+```{r}
+all_coefs %>% filter(term == "Unemployed") %>% 
+  ggplot(aes(x=year, y=estimate)) +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+
+## Voting against Unemployed
+data_mod %>% ggplot(aes(x = Unemployed, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+```
+
+```{r}
+change_coef_all %>% 
+  filter(term == "Unemployed") %>% 
+  ggplot(aes(x=omitted_var, y=estimate)) + 
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
+  facet_wrap(~year) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
+```
+
+Our model indicates that in the 2001, 2004 and 2007 elections, higher unemployment rates were linked with more support for the Labor party. Interestingly, in all of those elections the Liberal party was the incumbent party with John Howard as Prime Minister. From 2010 onwards, education has not had a significant effect, which is not what we would expect from the raw data plots. If we omit "office jobs", the estimated coefficient of unemployment becomes more negative, but remains insignificant in these three elections. Therefore, we conclude that the unemployment rate was a significant determinant in two-party preference for 2001, 2004 and 2007 elections, but has since become insignificant, after adjusting for other socio-demographics - contrary to expectations.
+
+
+## Other Language at Home
+
+```{r}
+all_coefs %>% filter(term == "OtherLanguageHome") %>% 
+  ggplot(aes(x=year, y=estimate)) +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+
+## Voting against OtherLanguageHome
+data_mod %>% ggplot(aes(x = OtherLanguageHome, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+```
+
+```{r}
+change_coef_all %>% 
+  filter(term == "OtherLanguageHome") %>% 
+  ggplot(aes(x=omitted_var, y=estimate)) + 
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
+  facet_wrap(~year) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
+```
+
+From the Tampa affair in 2001, when John Howard diverted the MV Tampa to Nauru (carrying 400 Afghani refugees), to the "stop the boats" mantra of the 2013 election, the Liberal party have consistently campaigned on policies of stricter immigration. We expect electorates with high proportions of people speaking languages other than English at home to also have high proportions of migrants (correlation $\rho = 0.90$), so OtherLanguageHome should have a positive relationship with voting Labor - which we see in the raw plots. After accounting for (some) birthplace demographics, we find that language at home has no significant effect on two-party preference.
+
+## Extractive
+
+```{r}
+all_coefs %>% filter(term == "Extractive") %>% 
+  ggplot(aes(x=year, y=estimate)) +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+
+## Voting against Extractive
+data_mod %>% ggplot(aes(x = Extractive, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+```
+
+Even in the election before the mining boom began in 2002, areas with more people working in "extractive" industries (mining, gas, water, gas, waste, electricity and agriculture) were significantly more supportive of the coalition. Over the following two elections the two parties did not differ significantly in their policies on natural resources, and we our coefficient estimates do not change much relative to 2001 - remaining significantly positive.
+
+In 2010, the Labor party proposed a 40% tax on "super profits" made from ‘the exploitation of Australia’s non-renewable resources’, which was heavily opposed by the Liberal party, who instead offered the Exploration Development Incentive. The mining sector, particularly in Western Australia, vehemently objected to Labor's policy, with Chamber of Minerals and Energy chief executive describing it as a "$\$9$ billion handbreak on the economy". Consequently, we see a huge jump in the effect of extractive jobs in 2010, with estimated coefficient increasing from $2.43$ to $5.63$ - becoming the largest coefficient in the model. Following the end of the mining boom in 2012, the estimated coefficient drops but remains significantly positive in 2013 and 2016.
