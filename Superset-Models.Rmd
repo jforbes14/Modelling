@@ -48,6 +48,7 @@ Union of the two OR use AW superset and add Incomes and Unemployment, as we expe
 superset <- bind_rows(superset_AW_vars, 
                       var_imp_all %>% filter(varname %in% c("Incomes", "Unemployed"),
                                              year == "2016") %>% select(var, varname)) 
+save(superset, file = "./Clean-Data/superset.rda")
 ```
 
 

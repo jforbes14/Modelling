@@ -7,35 +7,59 @@ output: html_document
 
 ```{r}
 library(tidyverse)
+library(visreg)
+library(broom)
 knitr::opts_knit$set(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
 knitr::opts_chunk$set(echo = FALSE)
 load("./Clean-Data/data_mod.rda")
+load("./Clean-Data/superset.rda")
 ```
 
+## Fitting models
+Can re-run so this .Rmd is not dependent on Superset-Models.Rmd
+```{r}
+fit_ss_16 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2016") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_13 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2013") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_10 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2010") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_07 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2007") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_04 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2004") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_01 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2001") %>% 
+                  select(Perc_LNP, (superset$varname %>% as.character)))
+```
 
 ## Analysis
 
-```{r}
-# Extracting coefficients
-ss_coef = data.frame(varname = names(fit_ss_01$coefficients),
-                     year = as.character(rep(seq(2001, 2016, by = 3), 
-                                             each = length(names(fit_ss_01$coefficients)))),
-                     coef =
-                       c(fit_ss_01$coefficients, 
-                         fit_ss_04$coefficients, 
-                         fit_ss_07$coefficients, 
-                         fit_ss_10$coefficients, 
-                         fit_ss_13$coefficients, 
-                         fit_ss_16$coefficients))
+Main effects - we can interpret t statistics. Coefficients of main effect with interaction are interpreted as the change when interacted variable takes value zero (its mean).
 
-# Point plot of coefficients for each variable, coloured by year
-ss_coef %>% 
-  filter(varname != "(Intercept)") %>% 
-  ggplot(aes(x=varname, y=coef)) +
-  geom_point(aes(col = year), size = 2.5, alpha = 0.8) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
+### Main effects
 
-```
+The main effects in this model can be directly interpreted for variables that are not in any of the interaction terms. For these variables, we interpret their coefficients as marginal effects - the estimated increase in two-party preferred vote the electorate would experience if it had a one standard deviation increase in that variable, holding all other variables fixed.
+
+For the variables that are included in an interaction, we allow for the variable's impact to depend on its interacted term. Since all variable have been scaled and centered, we can interpret the estimated coefficient of the main effect to be the marginal effect when any interaction terms are fixed at their mean (i.e. taking a value of zero). 
+
+We condition on different values of interacted variables using the `visreg` package to interpret the changing effects. 
 
 
 # Plotting coefficients over time
@@ -44,7 +68,6 @@ The plot shows the significance (T test) of each variable, across years.
 
 ```{r}
 ## Create df of coefficients
-library(broom)
 all_coefs <- bind_rows(tidy(fit_ss_16) %>% mutate(year = "2016"), 
                        tidy(fit_ss_13) %>% mutate(year = "2013"), 
                        tidy(fit_ss_10) %>% mutate(year = "2010"), 
@@ -55,57 +78,46 @@ all_coefs <- bind_rows(tidy(fit_ss_16) %>% mutate(year = "2016"),
 
 # Plot 95% confidence intervals for each coefficient
 all_coefs %>% 
-  filter(term != "(Intercept)") %>% 
+  filter(term != "(Intercept)", !grepl(":", term)) %>% 
   ggplot(aes(x = year, y = estimate)) + 
   geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
   geom_hline(aes(yintercept = 0), alpha = 0.5) + 
   facet_wrap(~term) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 
-save(all_coefs, file = "./Clean-Data/all_coefs.rda")
-
+#save(all_coefs, file = "./Clean-Data/all_coefs.rda")
 ```
+Question - should I include interacted main effects in this at all? Perhaps just demonstrate those without.
 
+Interactions - use visreg.
 
-Or alternatively use an F test (drop1) to test significance.
-
-```{r}
-all_sig <- bind_rows(tidy(drop1(fit_ss_01, test = "F")) %>% mutate(year = "2001"),
-                     tidy(drop1(fit_ss_04, test = "F")) %>% mutate(year = "2004"),
-                     tidy(drop1(fit_ss_07, test = "F")) %>% mutate(year = "2007"),
-                     tidy(drop1(fit_ss_10, test = "F")) %>% mutate(year = "2010"),
-                     tidy(drop1(fit_ss_13, test = "F")) %>% mutate(year = "2013"),
-                     tidy(drop1(fit_ss_16, test = "F")) %>% mutate(year = "2016")) %>% 
-  rename(pval_F = p.value) %>% select(term, pval_F, year)
-
-all_coefs_sig <- left_join(all_coefs, all_sig, by = c("term", "year"))                   
-
-# Plot
-all_coefs_sig %>% 
-  filter(term != "(Intercept)") %>% 
-  ggplot(aes(x = year, y = estimate)) + 
-  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
-  geom_line(aes(group = term)) + 
-  geom_point(aes(col = (pval_F < 0.05))) + 
-  scale_color_manual(values = c("grey50", "magenta")) + 
-  facet_wrap(~term) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
-```
-
-# Comparing estimated effects with raw plots
-If relationship appears to be the same, then variable is not masked by any of the others. If the relationship is not, then there is some dependence.
-
-Go through variables one by one, and examine effects
+Best to go through variable by variable.
 
 ### How coefficients change when we drop a variable
 If the coefficient changes significantly, then there is some dependency
 ```{r}
 drop_var <- function(fit) {
   dat <- fit$model
+  form1 <- as.character(fit$call)[2]
+  
 for (j in 2:ncol(dat)) {
   omitted_name <- names(dat)[j]
   dat_mod <- dat[, -j]
-  mod <- lm(Perc_LNP ~ ., data = dat_mod)
+  
+  form_parts <- (form1 %>% strsplit(" "))[[1]]
+  
+  # Locate interaction with omitted variable, remove it and the + before
+  form_use <- form_parts[-c(grep(omitted_name, form_parts), (grep(omitted_name, form_parts) - 1))] %>% 
+    paste(collapse = " ")
+  
+  if (form_use != "") {
+    # Run omitted variable regression
+    mod <- lm(form_use, data = dat_mod)
+  } else {
+    mod <- lm(form1, data = dat_mod)
+  }
+  
+  
   mod_out <- tidy(mod) %>% 
     mutate(omitted_var = omitted_name) %>% 
     left_join(tidy(fit) %>% select(term, estimate) %>% rename(full_estimate = estimate), by = "term") %>% 
@@ -140,6 +152,21 @@ change_coef_all <- bind_rows(change_coef_16, change_coef_13, change_coef_10, cha
 save(change_coef_all, file = "./Clean-Data/change_coef_all.rda")
 ```
 
+Visualise change in coefficients with dropped variables.
+
+```{r}
+change_coef_all %>% 
+  filter(year == "2016") %>% 
+  ggplot(aes(x=omitted_var, y=estimate)) + 
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
+  facet_wrap(~term) + 
+  #ggtitle(label = "CurrentlyStudying") +
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
+```
+
+
 ### Born in South/Eastern Europe
 ```{r}
 all_coefs %>% filter(term == "Born_SE_Europe") %>% 
@@ -173,20 +200,33 @@ aug_all %>% bind_cols(data_mod %>% filter(!is.na(Perc_LNP))) %>% select(-ends_wi
 Electorates with higher proportions of people from the UK are affiliated with support for LNP across all years, however this is only significant in 2007 and 2010. The electorate Moore (WA) has the highest proportion of migrants from the UK, and has high leverage (.hat > 0.2 for all years). 
 
 ### Currently Studying
-```{r}
-all_coefs %>% filter(term == "CurrentlyStudying") %>% 
-  ggplot(aes(x=year, y=estimate)) +
-  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
 
+```{r}
+#Conditional plots
+p16 <- visreg(fit_ss_16, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
+
+#visreg2d(fit_ss_16, "CurrentlyStudying", "RentLoan", type = "contrast", zlim = c(-10,10))
+```
+
+```{r}
 ## Voting against CurrentlyStudying
 data_mod %>% ggplot(aes(x = CurrentlyStudying, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
-Inspection of the raw data indicates that electoratres with more people currently studying should have an affiliation with the Labor party. This is also what we intuitively may expect, as Labor policies have been more favorable for students, often pitching more funding for eduaction than LNP. Our model indicates otherwise. In all but 2007 and 2010, after adjusting for other socio-demographics, the proportion of the population currently studying has no significant effect on party preference.
+Inspection of the raw data indicates that electoratres with more people currently studying should have an affiliation with the Labor party. This is also what we intuitively may expect, as Labor policies have been more favorable for students, often pitching more funding for eduaction than LNP. 
 
-To test for confounding, we re-fit the model with dropping a single variable, and observe the change in coefficient for CurrentlyStudying. When omitting MedianAge, the coefficient decreases by a large amount, which is not surprising given these two are negatively correlated ($\rho = -0.683$). Similarly, the effect of omitting higher education levels is absorbed by CurrentlyStudying, causing a decrease in estimated coefficient. 
+If we look consider when RentLoan fixed at its mean, and all varibles other (besides CurrentlyStudying) are fixed at any value, then in 2007, 2010 and 2013 the proportion of the population currently studying has a significant effect on party preference - with higher student populations being more affiliated with the Liberal party. For electorates with lower rental and loan payments, student population have a significantly positive relationship with supprt for the Liber party from 2007 onwards. For higher rental and loan payment areas, student populations have no effect.
+
+To test for confounding, we re-fit the model by dropping a single variable (along with any of its interactions) and observe the change in coefficient for CurrentlyStudying - which we interpret as the marginal effect when RentLoan is fixed at its mean. By omitting MedianAge and the interaction between CurrentlyStudying and MedianAge, the coefficient decreases by a large amount. This is not surprising, because electorates with higher student populations will be younger and therefore these two variables are negatively correlated ($\rho = -0.683$). Similarly, the effect of omitting higher education levels is absorbed by CurrentlyStudying, causing a decrease in estimated coefficient, which would change our conclusion in 2010 and 2013.
+
+What this is ultimately saying is that conclusion on the effect of larger student populations that are based on the raw data (or those driven by intuition) are confounded by the effects of age and levels of completed education. Once we adjust for these, in the previous three elections the larger student populations were more likely to support the Liberal party, whereas before it had no significant effect. For areas with lower rental and loan payments, the effect of student population becomes stronger.
 
 
 ```{r}
@@ -202,6 +242,23 @@ change_coef_all %>%
 cor(data_mod$MedianAge, data_mod$CurrentlyStudying)
 ```
 
+
+
+```{r}
+p16 <- visreg(fit_ss_16, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2007")
+p01 <- visreg(fit_ss_01, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2007")
+
+grid.arrange(p07, p10, p13, p16)
+
+#visreg2d(fit_ss_16, "CurrentlyStudying", "RentLoan", type = "contrast", zlim = c(-10,10))
+```
+
+We see across all four elections where this interaction is significant, the effect of student population is greatest amongst areas with low rental and loan payments. The effect reduces to become insignificant in areas with higher rental and loan payments.
+
 ### Educ
 ```{r}
 all_coefs %>% filter(term == "Educ") %>% 
@@ -211,7 +268,7 @@ all_coefs %>% filter(term == "Educ") %>%
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
 
 ## Voting against Educ
-data_mod %>% ggplot(aes(x = CurrentlyStudying, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+data_mod %>% ggplot(aes(x = Educ, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
 Higher levels of education were associated with support for the Labor party in 2004 and 2007 elections, but were not significant in the others. We expected a significant effect in each election.
