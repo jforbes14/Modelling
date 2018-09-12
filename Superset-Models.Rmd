@@ -7,7 +7,9 @@ output: html_document
 
 ```{r}
 library(tidyverse)
+library(stringr)
 knitr::opts_knit$set(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
+knitr::opts_chunk$set(echo = FALSE)
 load("./Clean-Data/data_mod.rda")
 load("./Clean-Data/var_imp_all.rda")
 load("./Clean-Data/std_coef_all.rda")
@@ -45,40 +47,267 @@ Union of the two
 superset <- bind_rows(superset_AW_vars, superset_SC_vars) %>% group_by(varname) %>% unique()
 ```
 
-## Regression
-Run a regression each year using this superset
 
+# Choosing interactions
+Models with no interactions
 ```{r}
-fit_ss_16 <- lm(Perc_LNP ~ ., 
+fit_ss_16_noint <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2016") %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
-fit_ss_13 <- lm(Perc_LNP ~ ., 
+fit_ss_13_noint <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2013") %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
-fit_ss_10 <- lm(Perc_LNP ~ ., 
+fit_ss_10_noint <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2010") %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
-fit_ss_07 <- lm(Perc_LNP ~ ., 
+fit_ss_07_noint <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2007") %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
-fit_ss_04 <- lm(Perc_LNP ~ ., 
+fit_ss_04_noint <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2004") %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
-fit_ss_01 <- lm(Perc_LNP ~ ., 
+fit_ss_01_noint <- lm(Perc_LNP ~ ., 
+                data = data_mod %>% 
+                  filter(year == "2001") %>% 
+                  select(Perc_LNP, (superset$varname %>% as.character)))
+```
+
+
+Record p-value for F test adding a single interaction to each model
+```{r}
+interact_F <- function(fit) {
+  data_model <- fit$model
+  formula_part1 <- (fit$call %>% as.character())[2]
+  
+  x_names <- names(data_model)[which(names(data_model) != "Perc_LNP")]
+  
+  pvalues_F <- matrix(nrow = length(x_names), ncol = length(x_names)) %>% as.data.frame()
+  colnames(pvalues_F) <- x_names
+  
+  pvalues_F <- pvalues_F %>% 
+    mutate(interact_var1 = x_names)
+  
+
+  for (i in 1:length(x_names)) {
+    
+    for (j in 1:length(x_names)) {
+      
+      if (i > j) {
+      new_int = paste0(x_names[i], sep = ":", x_names[j])  
+        
+      formula = paste0(formula_part1, sep = " + ", new_int)
+      
+      mod <- lm(formula, data_model)
+      
+      # LR Test
+      LR <- lmtest::lrtest(fit, mod)
+      pval <- LR$`Pr(>Chisq)`[2]
+      
+      pvalues_F[i,j] <- pval
+      
+      }
+      
+    }
+    
+  }
+  
+  pvalues_F <- pvalues_F %>% 
+    gather(key = "interact_var2", value = "pvalue", -interact_var1) %>% 
+    filter(!is.na(pvalue))
+  
+  return(pvalues_F)
+}
+
+int16 <- interact_F(fit_ss_16_noint) %>% mutate(year = "2016")
+int13 <- interact_F(fit_ss_13_noint) %>% mutate(year = "2013") 
+int10 <- interact_F(fit_ss_10_noint) %>% mutate(year = "2010") 
+int07 <- interact_F(fit_ss_07_noint) %>% mutate(year = "2007") 
+int04 <- interact_F(fit_ss_04_noint) %>% mutate(year = "2004") 
+int01 <- interact_F(fit_ss_01_noint) %>% mutate(year = "2001") 
+
+bind_rows(int01, int04, int07, int10, int13, int16) %>% 
+  filter(pvalue < 0.01) %>% 
+  group_by(interact_var1, interact_var2) %>% 
+  summarise(n = n()) %>% 
+  arrange(-n) 
+```
+
+We now add interactions to our model. The selection criteria is having an interaction that significantly improves the model in at least half of the elections (at the 1% significance level). We add the most common interaction, and then re-run.
+
+First added in the interaction between OtherLanguageHome and Extractive.
+
+```{r}
+fit_ss_16_1 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive, 
+                data = data_mod %>% 
+                  filter(year == "2016") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_13_1 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive, 
+                data = data_mod %>% 
+                  filter(year == "2013") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_10_1 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive, 
+                data = data_mod %>% 
+                  filter(year == "2010") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_07_1 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive, 
+                data = data_mod %>% 
+                  filter(year == "2007") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_04_1 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive, 
+                data = data_mod %>% 
+                  filter(year == "2004") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_01_1 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive, 
                 data = data_mod %>% 
                   filter(year == "2001") %>% 
                   select(Perc_LNP, (superset$varname %>% as.character)))
 
+
+# Interactions
+int16_1 <- interact_F(fit_ss_16_1) %>% mutate(year = "2016")
+int13_1 <- interact_F(fit_ss_13_1) %>% mutate(year = "2013") 
+int10_1 <- interact_F(fit_ss_10_1) %>% mutate(year = "2010") 
+int07_1 <- interact_F(fit_ss_07_1) %>% mutate(year = "2007") 
+int04_1 <- interact_F(fit_ss_04_1) %>% mutate(year = "2004") 
+int01_1 <- interact_F(fit_ss_01_1) %>% mutate(year = "2001") 
+
+bind_rows(int01_1, int04_1, int07_1, int10_1, int13_1, int16_1) %>% 
+  filter(pvalue < 0.01) %>% 
+  group_by(interact_var1, interact_var2) %>% 
+  summarise(n = n()) %>% 
+  arrange(-n) 
+```
+
+Now Education and OneParent_House is the only interaction significant in more than half, so we add.
+
+```{r}
+fit_ss_16_2 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2016") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_13_2 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2013") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_10_2 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2010") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_07_2 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2007") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_04_2 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2004") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_01_2 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2001") %>% 
+                  select(Perc_LNP, (superset$varname %>% as.character)))
+
+
+# Interactions
+int16_2 <- interact_F(fit_ss_16_2) %>% mutate(year = "2016")
+int13_2 <- interact_F(fit_ss_13_2) %>% mutate(year = "2013") 
+int10_2 <- interact_F(fit_ss_10_2) %>% mutate(year = "2010") 
+int07_2 <- interact_F(fit_ss_07_2) %>% mutate(year = "2007") 
+int04_2 <- interact_F(fit_ss_04_2) %>% mutate(year = "2004") 
+int01_2 <- interact_F(fit_ss_01_2) %>% mutate(year = "2001") 
+
+bind_rows(int01_2, int04_2, int07_2, int10_2, int13_2, int16_2) %>% 
+  filter(pvalue < 0.01) %>% 
+  group_by(interact_var1, interact_var2) %>% 
+  summarise(n = n()) %>% 
+  arrange(-n) 
+```
+
+Education and ManagerAdminClericalSales
+
+```{r}
+fit_ss_16_3 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
+                data = data_mod %>% 
+                  filter(year == "2016") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_13_3 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
+                data = data_mod %>% 
+                  filter(year == "2013") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_10_3 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
+                data = data_mod %>% 
+                  filter(year == "2010") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_07_3 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
+                data = data_mod %>% 
+                  filter(year == "2007") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_04_3 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
+                data = data_mod %>% 
+                  filter(year == "2004") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_01_3 <- lm(Perc_LNP ~ . + OtherLanguageHome:Extractive + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
+                data = data_mod %>% 
+                  filter(year == "2001") %>% 
+                  select(Perc_LNP, (superset$varname %>% as.character)))
+
+
+# Interactions
+int16_3 <- interact_F(fit_ss_16_3) %>% mutate(year = "2016")
+int13_3 <- interact_F(fit_ss_13_3) %>% mutate(year = "2013") 
+int10_3 <- interact_F(fit_ss_10_3) %>% mutate(year = "2010") 
+int07_3 <- interact_F(fit_ss_07_3) %>% mutate(year = "2007") 
+int04_3 <- interact_F(fit_ss_04_3) %>% mutate(year = "2004") 
+int01_3 <- interact_F(fit_ss_01_3) %>% mutate(year = "2001") 
+
+bind_rows(int01_3, int04_3, int07_3, int10_3, int13_3, int16_3) %>% 
+  filter(pvalue < 0.01) %>% 
+  group_by(interact_var1, interact_var2) %>% 
+  summarise(n = n()) %>% 
+  arrange(-n) 
+```
+
+We refrain from adding more interactions to avoid overfitting, being mindful of limiting parameters due to having 150 observations each election.
+
+
+Now saving models with the same name as before
+```{r}
+fit_ss_16 <- fit_ss_16_3
+fit_ss_13 <- fit_ss_13_3
+fit_ss_10 <- fit_ss_10_3
+fit_ss_07 <- fit_ss_07_3
+fit_ss_04 <- fit_ss_04_3
+fit_ss_01 <- fit_ss_01_3
+```
+
+
+## Analysis
+
+```{r}
 # Extracting coefficients
 ss_coef = data.frame(varname = names(fit_ss_01$coefficients),
                      year = as.character(rep(seq(2001, 2016, by = 3), 
@@ -99,6 +328,7 @@ ss_coef %>%
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 
 ```
+
 
 # Plotting coefficients over time
 
@@ -162,6 +392,15 @@ aug_all <- bind_rows(augment(fit_ss_01) %>% mutate(year = "2001"),
                      augment(fit_ss_10) %>% mutate(year = "2010"), 
                      augment(fit_ss_13) %>% mutate(year = "2013"), 
                      augment(fit_ss_16) %>% mutate(year = "2016"))
+```
+
+## Fitted values
+```{r}
+aug_all %>% 
+  ggplot(aes(x=.fitted, y=Perc_LNP)) + 
+  geom_abline(col = "blue") + 
+  geom_point(alpha = 0.5) +
+  facet_wrap(~year)
 ```
 
 
@@ -339,7 +578,7 @@ change_coef_all %>%
   filter(term == "CurrentlyStudying") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
   geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = full_estimate), col = "blue") + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
   geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
@@ -368,7 +607,7 @@ change_coef_all %>%
   filter(term == "Educ") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
   geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = full_estimate), col = "blue") + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
   geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
@@ -423,7 +662,7 @@ change_coef_all %>%
   filter(term == "Unemployed") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
   geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = full_estimate), col = "blue") + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
   geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
@@ -464,7 +703,7 @@ change_coef_all %>%
   filter(term == "NoReligion") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
   geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = full_estimate), col = "blue") + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
   geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
@@ -505,7 +744,7 @@ change_coef_all %>%
   filter(term == "OtherLanguageHome") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
   geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = full_estimate), col = "blue") + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
   geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
@@ -530,7 +769,7 @@ change_coef_all %>%
   filter(term == "OtherLanguageHome") %>% 
   ggplot(aes(x=omitted_var, y=estimate)) + 
   geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = full_estimate), col = "blue") + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
   geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
