@@ -242,38 +242,41 @@ change_coef_all %>%
 cor(data_mod$MedianAge, data_mod$CurrentlyStudying)
 ```
 
-
-
-```{r}
-p16 <- visreg(fit_ss_16, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2016")
-p13 <- visreg(fit_ss_13, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2013")
-p10 <- visreg(fit_ss_10, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2010")
-p07 <- visreg(fit_ss_07, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2007")
-p04 <- visreg(fit_ss_04, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2007")
-p01 <- visreg(fit_ss_01, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2007")
-
-grid.arrange(p07, p10, p13, p16)
-
-#visreg2d(fit_ss_16, "CurrentlyStudying", "RentLoan", type = "contrast", zlim = c(-10,10))
-```
-
 We see across all four elections where this interaction is significant, the effect of student population is greatest amongst areas with low rental and loan payments. The effect reduces to become insignificant in areas with higher rental and loan payments.
 
 ### Educ
-```{r}
-all_coefs %>% filter(term == "Educ") %>% 
-  ggplot(aes(x=year, y=estimate)) +
-  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
 
+```{r}
+#Conditional plots with MedianAge
+p16 <- visreg(fit_ss_16, "Educ", by = "MedianAge", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "Educ", by = "MedianAge", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "Educ", by = "MedianAge", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "Educ", by = "MedianAge", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "Educ", by = "MedianAge", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "Educ", by = "MedianAge", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
+
+#Conditional plots with OneParent_House
+p16 <- visreg(fit_ss_16, "Educ", by = "OneParent_House", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "Educ", by = "OneParent_House", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "Educ", by = "OneParent_House", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "Educ", by = "OneParent_House", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "Educ", by = "OneParent_House", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "Educ", by = "OneParent_House", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
+```
+
+```{r}
 ## Voting against Educ
 data_mod %>% ggplot(aes(x = Educ, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
-Higher levels of education were associated with support for the Labor party in 2004 and 2007 elections, but were not significant in the others. We expected a significant effect in each election.
+From inspection of the raw data plots, we expect there to be a weak or insignifcant negative relationship between education levels and two-party preference. Intuitively, we might expect support for Labor as they have more favorable education policies.
 
-Omitting NoReligion results in a stronger estimated effect in support for Labor in 2010, 2013 and 2016.
+Aside from 2001 and 2016, we find that the higher education levels become significant in increasing Labor support in electorates with age profiles (MedianAge) at or below average. For older electorates, the effect of education is insignificant. In 2001 and 2016, education levels were not significant. Furthermore, electorates with a higher proportion of single parent households have a stronger effect of education in support of Labor.
+
 
 ```{r}
 change_coef_all %>% 
@@ -285,6 +288,10 @@ change_coef_all %>%
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
 ```
+
+Omitting Born_SE_Europe or Extractive decrease the estimated coefficient of the main effect for education, making it significantly negative in every year. This indicates that without accounting for migrant population, or industry of work, areas with higher education would be more affiliated with Labor.
+
+
 
 ### Extractive
 ```{r}
