@@ -9,6 +9,7 @@ output: html_document
 library(tidyverse)
 library(visreg)
 library(broom)
+library(gridExtra)
 knitr::opts_knit$set(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
 knitr::opts_chunk$set(echo = FALSE)
 load("./Clean-Data/data_mod.rda")
@@ -47,6 +48,14 @@ fit_ss_01 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Edu
                 data = data_mod %>% 
                   filter(year == "2001") %>% 
                   select(Perc_LNP, (superset$varname %>% as.character)))
+
+# augment
+aug_all <- bind_rows(augment(fit_ss_01) %>% mutate(year = "2001"), 
+                     augment(fit_ss_04) %>% mutate(year = "2004"), 
+                     augment(fit_ss_07) %>% mutate(year = "2007"), 
+                     augment(fit_ss_10) %>% mutate(year = "2010"), 
+                     augment(fit_ss_13) %>% mutate(year = "2013"), 
+                     augment(fit_ss_16) %>% mutate(year = "2016"))
 ```
 
 ## Analysis
@@ -299,28 +308,46 @@ all_coefs %>% filter(term == "Extractive") %>%
   ggplot(aes(x=year, y=estimate)) +
   geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
   geom_hline(aes(yintercept = 0), alpha = 0.5) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-9,9))
 
 ## Voting against Extractive
 data_mod %>% ggplot(aes(x = Extractive, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
-Our estimated effects are strongly positive each election, which matches our expectations based on the plots.
+Our estimated effects are strongly positive each election, which matches our expectations based on the plots. We see a large jump in 2010, which we can attribute to the proposed Labor tax. Overall, areas with more extractive jobs have been significantly more likely to vote Liberal.
 
 
 ### Median Age
 ```{r}
-all_coefs %>% filter(term == "MedianAge") %>% 
-  ggplot(aes(x=year, y=estimate)) +
-  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+#Conditional plots
+p16 <- visreg(fit_ss_16, "MedianAge", by = "Educ", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "MedianAge", by = "Educ", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "MedianAge", by = "Educ", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "MedianAge", by = "Educ", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "MedianAge", by = "Educ", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "MedianAge", by = "Educ", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
 
 ## Voting against MedianAge
 data_mod %>% ggplot(aes(x = MedianAge, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
-Median age has a significantly positive relationship with support for LNP.
+The raw plots suggest that median age has a significantly positive relationship with support for LNP. As we saw when analysing education levels, it is possible that we are observing a confounded effect here. If we omit student populations, our estimated effect of age profile is reduced (and would be insignificant in 2007 and 2010). We also see that for increasing levels of education, median age has a larger positive effect on support for the Liberal party across all elections.
+
+
+```{r}
+change_coef_all %>% 
+  filter(term == "MedianAge") %>% 
+  ggplot(aes(x=omitted_var, y=estimate)) + 
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
+  facet_wrap(~year) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
+
+cor(data_mod$MedianAge, data_mod$CurrentlyStudying)
+```
 
 ### Unemployed
 ```{r}
@@ -334,7 +361,9 @@ all_coefs %>% filter(term == "Unemployed") %>%
 data_mod %>% ggplot(aes(x = Unemployed, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
-We expect there to be a strong relationship between Labor party support and high levels of unemployment, based on the raw data. The model indicates that this was true in 2001-2007, but in the previous three elections unemployment has not had a significant effect. Our initial conclusions are confounded by ManagerAdminClericalSales, MedianAge and OneParent_House. There is a negative correlation between ManagerAdminClericalSales ($\rho = 0.513$), meaning that areas with higher unemployment typically have less of the population working "office jobs", hence omitting this variable causes bias in our estimated of Unemployment. There is a strong positive correlation between Unemployment and OneParent_House ($\rho = 0.679$), indicating that initial conclusions may be confusing these effects.
+We expect there to be a strong relationship between Labor party support and high levels of unemployment, based on the raw data. The model indicates that this was true in 2001-2007, but in the previous three elections unemployment has not had a significant effect, with a clear swing in the 2010 election.
+
+The anticipated negative relationship is confounded by ManagerAdminClericalSales and Incomes. There is a negative correlation between ManagerAdminClericalSales ($\rho = -0.513$), meaning that areas with higher unemployment typically have less of the population working "office jobs", and omitting this variable causes the estimated of Unemployment to be biased downwards. Similarly, omitting Incomes ($\rho = -0.666$) would cause a positive bias in the estimated effect of unemployment. 
 
 
 ```{r}
@@ -362,7 +391,7 @@ all_coefs %>% filter(term == "ManagerAdminClericalSales") %>%
 data_mod %>% ggplot(aes(x = ManagerAdminClericalSales, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
-Significantly positive relationship between ManagerAdminClericalSales and support for LNP across all years.
+We anticipate a positive relationship between "office jobs" and support for the Liberal party, based on the raw plots. We find a significantly positive relationship between ManagerAdminClericalSales and support for LNP across all years.
 
 ### NoReligion
 ```{r}
@@ -376,7 +405,7 @@ all_coefs %>% filter(term == "NoReligion") %>%
 data_mod %>% ggplot(aes(x = NoReligion, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
-Negative effects estimated, but are only significant in 2010 and 2013. From the original plots we don't expect to see any significant relationship. 
+We do not anticipate that rates of atheism should have a significant effect on party preference, but we find that in 2010 and 2013 electorates with higher rates of atheism were aligned more with the Labor party. Although practically uncorrelated, without accounting for an electorate's breakdown of job by industry, estimated effect of NoReligion will be biased downwards.
 
 ```{r}
 change_coef_all %>% 
@@ -387,76 +416,77 @@ change_coef_all %>%
   geom_hline(aes(yintercept = 0), col = "grey50") + 
   facet_wrap(~year) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
-
-cor(data_mod$OneParent_House, data_mod$Unemployed)
 ```
 
 ### OneParent_House
 ```{r}
-all_coefs %>% filter(term == "OneParent_House") %>% 
-  ggplot(aes(x=year, y=estimate)) +
-  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+#Conditional plots
+p16 <- visreg(fit_ss_16, "OneParent_House", by = "Educ", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "OneParent_House", by = "Educ", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "OneParent_House", by = "Educ", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "OneParent_House", by = "Educ", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "OneParent_House", by = "Educ", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "OneParent_House", by = "Educ", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
+
+#Conditional plots
+p16 <- visreg(fit_ss_16, "OneParent_House", by = "Incomes", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "OneParent_House", by = "Incomes", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "OneParent_House", by = "Incomes", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "OneParent_House", by = "Incomes", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "OneParent_House", by = "Incomes", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "OneParent_House", by = "Incomes", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
 
 ## Voting against OneParent_House
 data_mod %>% ggplot(aes(x = OneParent_House, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
-Significantly negative relationship observed in original plots and estimated in model.
-
-### OtherLanguageHome
 ```{r}
-all_coefs %>% filter(term == "OtherLanguageHome") %>% 
-  ggplot(aes(x=year, y=estimate)) +
-  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
-
-## Voting against OtherLanguageHome
-data_mod %>% ggplot(aes(x = OtherLanguageHome, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+## Voting against OneParent_House
+data_mod %>% ggplot(aes(x = OneParent_House, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
-Model estimates insignificant effect, whereas the raw data indicates there should be a negative relationship. We see that if we omit Born_SE_Europe, its effect is absorbed into OtherLanguageHome. This is telling us that it does not matter about the language spoken, but rather where the population is born.
+Labor often propose policies that benefit families, and particularly single parent families. The raw plots show a strong negative relationship between OneParent_House and support for the Liberal party. We find that this is true only for electorates with higher levels of education. For those with mean or lower education, single parent households have no effect on party preference (assuming mean Incomes). Incomes also impact the estimated effect of single parent households with the effect of OneParent_House on Liberal support being more negative for electorates with lower incomes.
 
-```{r}
-change_coef_all %>% 
-  filter(term == "OtherLanguageHome") %>% 
-  ggplot(aes(x=omitted_var, y=estimate)) + 
-  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
-  geom_hline(aes(yintercept = 0), col = "grey50") + 
-  facet_wrap(~year) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
-```
 
 ### RentLoan
 ```{r}
-all_coefs %>% filter(term == "RentLoan") %>% 
-  ggplot(aes(x=year, y=estimate)) +
-  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+#Conditional plots
+p16 <- visreg(fit_ss_16, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
 
 ## Voting against RentLoan
 data_mod %>% ggplot(aes(x = RentLoan, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
-Expect insignificant effect from the raw plots. In 2010 we see significant support for LNP.
+In 2010 we see a shift in the impact of rental and loan repayments. Prior to 2010, this did not have a significant impact on party preference, regardless of student population. We see that from 2010, areas with low student populations are more affected by rental and loan payments - with higher repayments being associated with support for the Liberal party. As student populations increase, the effect becomes insignificant.
 
+### Incomes
 ```{r}
-change_coef_all %>% 
-  filter(term == "OtherLanguageHome") %>% 
-  ggplot(aes(x=omitted_var, y=estimate)) + 
-  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
-  geom_hline(aes(yintercept = 0), col = "grey50") + 
-  facet_wrap(~year) + 
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
+#Conditional plots
+p16 <- visreg(fit_ss_16, "Incomes", by = "OneParent_House", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "Incomes", by = "OneParent_House", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "Incomes", by = "OneParent_House", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "Incomes", by = "OneParent_House", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "Incomes", by = "OneParent_House", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "Incomes", by = "OneParent_House", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
+
+## Voting against Incomes
+data_mod %>% ggplot(aes(x = Incomes, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 ```
 
-
-
+We may expect areas with higher income to be slightly affiliated with the Liberal party - which typically has policies of lower taxes for both individuals and businesses - or to not have an affiliation at all. We find that the effect of Incomes depend on the proportion of single parent households. Electorates with fewer single parent households (at the mean rate or below), had a significantly negative relationship between Incomes and support for the Labor party in 2004, 2007 and 2013. For all other years, and for higher incidences of single parent households, income is not significant.
 
 
 ------------------------------------------------------------------------------------------
