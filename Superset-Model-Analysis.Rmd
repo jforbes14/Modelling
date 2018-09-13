@@ -94,7 +94,7 @@ all_coefs %>%
   facet_wrap(~term) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 
-#save(all_coefs, file = "./Clean-Data/all_coefs.rda")
+save(all_coefs, file = "./Clean-Data/all_coefs.rda")
 ```
 Question - should I include interacted main effects in this at all? Perhaps just demonstrate those without.
 

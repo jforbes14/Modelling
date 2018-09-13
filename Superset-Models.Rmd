@@ -197,9 +197,14 @@ aug_all <- bind_rows(augment(fit_ss_01) %>% mutate(year = "2001"),
 ## Fitted values
 ```{r}
 aug_all %>% 
+  left_join(data_mod %>% select(OtherLanguageHome, year, Election_Division), 
+            by = c("OtherLanguageHome", "year")) %>%
+ # mutate(correct_party = ifelse((.fitted - 50)*(Perc_LNP - 50) >= 0, "Correct", "Incorrect")) %>% 
   ggplot(aes(x=.fitted, y=Perc_LNP)) + 
   geom_abline(col = "blue") + 
-  geom_point(alpha = 0.5) +
+  geom_point(aes(label = Election_Division, 
+                 #col = correct_party
+                 ), alpha = 0.5) +
   facet_wrap(~year)
 ```
 

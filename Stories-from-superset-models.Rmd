@@ -10,9 +10,44 @@ library(tidyverse)
 load("Clean-Data/data_mod.rda")
 load("Clean-Data/all_coefs.rda")
 load("Clean-Data/change_coef_all.rda")
+load("./Clean-Data/superset.rda")
 
 knitr::opts_chunk$set(echo = FALSE, results = FALSE)
 ```
+
+Re run models
+```{r}
+fit_ss_16 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2016") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_13 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2013") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_10 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2010") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_07 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2007") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_04 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2004") %>% 
+                  select(Perc_LNP,  (superset$varname %>% as.character)))
+
+fit_ss_01 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+                data = data_mod %>% 
+                  filter(year == "2001") %>% 
+                  select(Perc_LNP, (superset$varname %>% as.character)))
+```
+
 
 # Significance of all coefficients
 
@@ -26,28 +61,11 @@ all_coefs %>%
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 ```
 
-Of particular interest:
-
-- CurrentlyStudying and Educ - would expect similar effects
-
-- Extractive - jump in 2010
-
-- Unemployed - change from Labor to insignificant
-
-- OtherLanuageHome - expect to be strong relationship, but is insignificant
-
-# Stories from the data
+# Stories from the model
 
 ## Education and Students
 
 ```{r}
-all_coefs %>% filter(term %in% c("CurrentlyStudying", "Educ")) %>% 
-  ggplot(aes(x=year, y=estimate)) +
-  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
-  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
-  facet_wrap(~term) +
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
-
 ## Voting against CurrentlyStudying
 data_mod %>% ggplot(aes(x = CurrentlyStudying, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year) + ggtitle("CurrentlyStudying")
 
@@ -76,11 +94,6 @@ change_coef_all %>%
   ggtitle(label = "CurrentlyStudying") +
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
 ```
-```{r}
-data_mod %>% ggplot(aes(x=Educ, y=NoReligion)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(~year)
-data_mod %>% ggplot(aes(x=NoReligion, y=Perc_LNP)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(~year)
-
-```
 
 Education policy has always been key policy issue in the weeks leading up to a federal election. The Labor party, more often than not, campaign with policies that boost funding for education, and the coalition will usually propose alternatives with less funding or aim to match particular objectives - for example, the "Better Schools Plan" in 2013. It would be reasonable to expect that electorates with higher student populations, and to an extent higher education levels, would be inclined to support Labor *every* election. The raw data plots indicate that student population may have a negative effect on $TPP$, whereas education levels will be insignificant or slightly negative (with respect to the Liberal party). 
 
@@ -93,7 +106,6 @@ So why was our intuition misguided along with the conclusions from the raw data?
 We re-fit the model by dropping a single variable (along with any of its interactions) and observe the change in coefficient for CurrentlyStudying - which we interpret as the marginal effect when RentLoan is fixed at its mean. By omitting MedianAge and the interaction between CurrentlyStudying and MedianAge, the coefficient decreases by a large amount. This is not surprising, because electorates with higher student populations will be younger and therefore these two variables are negatively correlated ($\rho = −0.683$). Similarly, the effect of omitting higher education levels is absorbed by CurrentlyStudying, causing a decrease in estimated coefficient.
 
 What this is ultimately saying is that conclusion on the effect of larger student populations that are based on the raw data (or those driven by intuition) are confounded by the effects of age and levels of completed education. Once we adjust for these, we find that larger student populations were significantly associated with the Liberal party in the past four elections in areas at or below mean rent and loan prices. Otherwise, student populations do not affect party preference.
-
 
 ## Unemployment
 ```{r}
@@ -174,3 +186,84 @@ We may expect areas with higher income to be slightly affiliated with the Libera
 ## Summary 
 
 This indicates that our initial thoughts on the effect education levels would have is being confounded by these other factors. We are not laying any causal claims here, but rather indicating that our expectations about aggregate behaviour can be simeltaneously determined by grouping characteristics together. Essentially, our intuitions are very susceptible to omitted variable bias!
+
+## Further illustration of the interactions.
+
+To illustrate the effect of the interactions, we design a collection of hypothetical electorates, who assume average characteristics aside from the interaction of interest.
+
+```{r}
+# Set up the prototypes
+prototype = fit_ss_16$model[1:16,] 
+prototype[,] <- 0
+prototype$RentLoan[1:4] <- c(1, -1, 1, -1)
+prototype$CurrentlyStudying[1:4] <- c(1, 1, -1, -1)
+prototype$Educ[5:8] <- c(1, -1, 1, -1)
+prototype$MedianAge[5:8] <- c(1, 1, -1, -1)
+prototype$Educ[9:12] <- c(1, -1, 1, -1)
+prototype$OneParent_House[9:12] <- c(1, 1, -1, -1)
+prototype$Incomes[13:16] <- c(1, -1, 1, -1)
+prototype$OneParent_House[13:16] <- c(1, 1, -1, -1)
+
+prototype$pred16 <- predict(fit_ss_16, prototype)
+prototype$pred13 <- predict(fit_ss_13, prototype)
+prototype$pred10 <- predict(fit_ss_10, prototype)
+prototype$pred07 <- predict(fit_ss_07, prototype)
+prototype$pred04 <- predict(fit_ss_04, prototype)
+prototype$pred01 <- predict(fit_ss_01, prototype)
+```
+
+
+### Currently Studying and Rent/Loan Payments
+```{r}
+prototype %>% 
+  filter(CurrentlyStudying != 0) %>%
+  select(CurrentlyStudying, RentLoan, starts_with("pred")) %>% 
+  gather(key = "year_pred", value = "predicted", -c(CurrentlyStudying, RentLoan)) %>%
+  ggplot(aes(x=CurrentlyStudying, y=RentLoan)) + 
+  geom_tile(aes(fill = predicted)) + 
+  facet_wrap(~year_pred) +
+  scale_fill_gradient2(high = "#116bfc", mid = "white", low = "red", midpoint = 50) +
+  theme_bw()
+```
+
+### Median age and education levels
+
+```{r}
+prototype %>% 
+  filter(MedianAge != 0) %>%
+  select(MedianAge, Educ, starts_with("pred")) %>% 
+  gather(key = "year_pred", value = "predicted", -c(MedianAge, Educ)) %>%
+  ggplot(aes(x=MedianAge, y=Educ)) + 
+  geom_tile(aes(fill = predicted)) + 
+  facet_wrap(~year_pred) +
+  scale_fill_gradient2(high = "#116bfc", mid = "white", low = "red", midpoint = 50) +
+  theme_bw()
+```
+
+### One parent households and education levels
+
+```{r}
+prototype %>% 
+  filter(OneParent_House != 0, Educ != 0) %>% 
+  select(OneParent_House, Educ, starts_with("pred")) %>% 
+  gather(key = "year_pred", value = "predicted", -c(OneParent_House, Educ)) %>%
+  ggplot(aes(x=OneParent_House, y=Educ)) + 
+  geom_tile(aes(fill = predicted)) + 
+  facet_wrap(~year_pred) +
+  scale_fill_gradient2(high = "#116bfc", mid = "white", low = "red", midpoint = 50) +
+  theme_bw()
+```
+
+### One parent households and incomes
+
+```{r}
+prototype %>% 
+  filter(Incomes != 0) %>% 
+  select(OneParent_House, Incomes, starts_with("pred")) %>% 
+  gather(key = "year_pred", value = "predicted", -c(OneParent_House, Incomes)) %>%
+  ggplot(aes(x=OneParent_House, y=Incomes)) + 
+  geom_tile(aes(fill = predicted)) + 
+  facet_wrap(~year_pred) +
+  scale_fill_gradient2(high = "#116bfc", mid = "white", low = "red", midpoint = 50) +
+  theme_bw()
+```
