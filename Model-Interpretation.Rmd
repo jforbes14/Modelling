@@ -1,0 +1,280 @@
+---
+title: "Model Interpretation"
+author: "Jeremy Forbes"
+date: "13/09/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+load("Clean-Data/data_mod.rda")
+load("Clean-Data/all_coefs.rda")
+load("Clean-Data/change_coef_all.rda")
+load("./Clean-Data/superset.rda")
+
+knitr::opts_chunk$set(echo = FALSE, results = FALSE)
+```
+
+```{r}
+# Set up the prototypes
+prototype = fit_ss_16$model[1:16,] 
+prototype[,] <- 0
+prototype$RentLoan[1:4] <- c(1, -1, 1, -1)
+prototype$CurrentlyStudying[1:4] <- c(1, 1, -1, -1)
+prototype$Educ[5:8] <- c(1, -1, 1, -1)
+prototype$MedianAge[5:8] <- c(1, 1, -1, -1)
+prototype$Educ[9:12] <- c(1, -1, 1, -1)
+prototype$OneParent_House[9:12] <- c(1, 1, -1, -1)
+prototype$Incomes[13:16] <- c(1, -1, 1, -1)
+prototype$OneParent_House[13:16] <- c(1, 1, -1, -1)
+
+prototype$pred16 <- predict(fit_ss_16, prototype)
+prototype$pred13 <- predict(fit_ss_13, prototype)
+prototype$pred10 <- predict(fit_ss_10, prototype)
+prototype$pred07 <- predict(fit_ss_07, prototype)
+prototype$pred04 <- predict(fit_ss_04, prototype)
+prototype$pred01 <- predict(fit_ss_01, prototype)
+```
+
+# Interpreting the model
+
+By standardizing the socio-demographic variables within each election year and using the same model specification across elections, we are able to compare the estimated effects of covariates across elections. We now proceed to drawing conclusions on each variable's relationship with the two-party preferred vote, relative to the other electorates in that election year. 
+
+Six of the twelve variables in the model are not included in an interaction, so the coefficients of these main effects can be directly interpreted as the marginal effect of a one standard deviation increase in the covariate, holding all other covariates fixed. For a variable that is involved in an interaction, we can still interpret its main effect as being the marginal effect of a one standard deviation increase in that variable, when any variables it is interacted with assume their mean value (i.e. a value of zero as they have been standardized).
+
+We begin evaluation of these effects by focusing on those without interactions.
+
+## Industry of work
+
+### Extractive
+
+Even in the election before the mining boom began in 2002, areas with more people working in "extractive" industries (mining, gas, water, gas, waste, electricity and agriculture) were significantly more supportive of the coalition. Our coefficient estimates do not change much over the next two elections relative to 2001 - remaining significantly positive. In 2010, we see a large jump in the effect, with the estimated coefficient increasing from $3.0$ to $6.28$ - becoming the largest main effect coefficient in the model. This may be a direct result of Labor proposing a 40% tax on "super profits" made from ‘the exploitation of Australia’s non-renewable resources’, which was heavily opposed by the Liberal party. Following the end of the mining boom in 2012, the estimated coefficient drops but remains significantly positive in 2013 and 2016.
+
+Overall, we find that electorates that have a larger proportions of people working in mining have been strongly aligned with the Liberal party over these six elections - having the largest effect in 2010. 
+
+```{r}
+## Voting against Extractive
+data_mod %>% ggplot(aes(x = Extractive, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+# Coefficients
+all_coefs %>% filter(term == "Extractive") %>% 
+  ggplot(aes(x=year, y=estimate)) +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+```
+
+### Office jobs: ManagerAdminClericalSales
+
+Based on the raw data plots, we anticipate a positive relationship between “office jobs” and support for the Liberal party. We find a significantly positive relationship between ManagerAdminClericalSales and support for LNP across all years.
+
+From the effects of these two, we conclude that industry has had significant influence on electorate voting behaviour across all elections. 
+
+```{r}
+## Voting against ManagerAdminClericalSales
+data_mod %>% ggplot(aes(x = ManagerAdminClericalSales, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+# Coefficients
+all_coefs %>% filter(term == "ManagerAdminClericalSales") %>% 
+  ggplot(aes(x=year, y=estimate)) +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+```
+
+## Immigrant population
+
+### From Southern or Eastern Europe
+
+The raw data indicates that areas with more immigrants from South-Eastern Europe should have a strong relationship with Labor support. We find that this holds true after adjusting for other socio-demographics across all elections, as the estimated coefficients are significantly negative. 
+
+```{r}
+## Voting against Born_SE_Europe
+data_mod %>% ggplot(aes(x = Born_SE_Europe, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+# Coefficients
+all_coefs %>% filter(term == "Born_SE_Europe") %>% 
+  ggplot(aes(x=year, y=estimate)) +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+```
+
+### From the United Kingdom
+
+We anticipated effects of more immigrants from the UK would have a weakly positive or insignificant relationship with support for the Liberal party. We find that this is true in our models as Born_UK is only significant (and positive) in the 2007 and 2010 elections.
+
+Therefore, we conclude that the distribution of birthplace within an electorate place has significant influence on the voting behaviour. 
+
+
+```{r}
+## Voting against Born_UK
+data_mod %>% ggplot(aes(x = Born_UK, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+# Coefficients
+all_coefs %>% filter(term == "Born_UK") %>% 
+  ggplot(aes(x=year, y=estimate)) +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+```
+
+
+## No Religion
+
+We do not anticipate that rates of atheism should have a significant effect on party preference, reflected in the raw data plots. In 2010 and 2013, we find that higher rates of atheism were aligned with support the Labor party, and in other elections this was insignificant.
+
+```{r}
+## Voting against NoReligion
+data_mod %>% ggplot(aes(x = NoReligion, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+# Coefficients
+all_coefs %>% filter(term == "NoReligion") %>% 
+  ggplot(aes(x=year, y=estimate)) +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+```
+
+## Unemployment rate
+
+Inspection of the raw data indicates that areas with higher unemployment should be less supportive of the Liberal party. After adjusting for other electorate characteristics, we find that this is true in the 2001, 2004 and 2007. Interestingly, in all of those elections the Liberal party was the incumbent party - although this may be purely coincidental. From 2010 onwards, unemployment does not have a significant effect.
+
+In an effort to tease out the reason why our initial thoughts were wrong, we re-estimate the models for 2010, 2013 and 2016, omitting a single variable (and its interactions) each time. 
+
+When we omit "office jobs" or age profile, the estimated coefficient of unemployment becomes more negative, whilst omitting Incomes would increase the effect in favor of the Liberal party. This indicates that our conclusions about unemployment may be particularly susceptive to omitted variable bias?
+
+```{r}
+## Voting against Unemployed
+data_mod %>% ggplot(aes(x = Unemployed, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+
+all_coefs %>% filter(term == "Unemployed") %>% 
+  ggplot(aes(x=year, y=estimate)) +
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = 0), alpha = 0.5) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + lims(y=c(-8,8))
+
+# Drop 1
+change_coef_all %>% 
+  filter(term == "Unemployed", year %in% c("2010", "2013", "2016")) %>% 
+  ggplot(aes(x=omitted_var, y=estimate)) + 
+  geom_point() + geom_errorbar(aes(ymin = lower95, ymax = upper95), width = 0.25) + 
+  geom_hline(aes(yintercept = full_estimate), col = "blue", linetype = 2, alpha = 0.7) + 
+  geom_hline(aes(yintercept = 0), col = "grey50") + 
+  facet_wrap(~year) + 
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) 
+```
+
+## Interactions
+
+### Student population and rent/loan payments
+
+Education policy has always been key policy issue in the weeks leading up to a federal election. The Labor party, more often than not, campaign with policies that boost funding for education, and the coalition will usually propose alternatives with less funding or aim to match particular objectives - for example, the "Better Schools Plan" in 2013. It would be reasonable to expect that electorates with higher student populations would be inclined to support Labor at every election, which is reflected in the raw data plots. 
+
+We interact the student population with the median rental and loan repayments for each electorate, and find that in 2007, 2010 and 2013, higher student proportions significantly increased Liberal support in electorates with average rental and mortgage payments. The effect of student population in the direction of Liberal support was higher in lower rent and loan payment areas in all elections - although still insignificant in 2001 and 2004. Areas with high rental and loan payments did not appear to be affected by student population in any election.
+
+Additionally, we find that electorates with smaller student populations (at or below the mean) are more affected by rental and loan payments, with higher payment levels having a positive effect on Liberal support from 2010 onwards. Higher student populations are not significantly affected by median payments.
+
+```{r}
+## Voting against CurrentlyStudying
+data_mod %>% ggplot(aes(x = CurrentlyStudying, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year) + ggtitle("CurrentlyStudying")
+
+## Voting against RentLoan
+data_mod %>% ggplot(aes(x = RentLoan, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year) + ggtitle("RentLoan")
+```
+
+```{r}
+#Conditional plots
+p16 <- visreg(fit_ss_16, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "CurrentlyStudying", by = "RentLoan", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
+
+p16 <- visreg(fit_ss_16, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "RentLoan", by = "CurrentlyStudying", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
+
+#p16 <- visreg2d(fit_ss_16, "CurrentlyStudying", "RentLoan", plot.type = "gg", type = "contrast") + ggtitle("2016") + 
+#  scale_fill_gradient2(high = "#116bfc", mid = "white", low = "red", midpoint = 0)
+#p13 <- visreg2d(fit_ss_13, "CurrentlyStudying", "RentLoan", plot.type = "gg", type = "contrast") + ggtitle("2013") + 
+#  scale_fill_gradient2(high = "#116bfc", mid = "white", low = "red", midpoint = 0)
+#p10 <- visreg2d(fit_ss_10, "CurrentlyStudying", "RentLoan", plot.type = "gg", type = "contrast") + ggtitle("2010") + 
+#  scale_fill_gradient2(high = "#116bfc", mid = "white", low = "red", midpoint = 0)
+#p07 <- visreg2d(fit_ss_07, "CurrentlyStudying", "RentLoan", plot.type = "gg", type = "contrast") + ggtitle("2007") + 
+#  scale_fill_gradient2(high = "#116bfc", mid = "white", low = "red", midpoint = 0)
+#p04 <- visreg2d(fit_ss_04, "CurrentlyStudying", "RentLoan", plot.type = "gg", type = "contrast") + ggtitle("2004") + 
+#  scale_fill_gradient2(high = "#116bfc", mid = "white", low = "red", midpoint = 0)
+#p01 <- visreg2d(fit_ss_01, "CurrentlyStudying", "RentLoan", plot.type = "gg", type = "contrast") + ggtitle("2001") + 
+#  scale_fill_gradient2(high = "#116bfc", mid = "white", low = "red", midpoint = 0)
+
+#grid.arrange(p01, p04, p07, p10, p13, p16)
+```
+
+```{r}
+prototype %>% 
+  filter(CurrentlyStudying != 0) %>%
+  select(CurrentlyStudying, RentLoan, starts_with("pred")) %>% 
+  gather(key = "year_pred", value = "predicted", -c(CurrentlyStudying, RentLoan)) %>%
+  ggplot(aes(x=CurrentlyStudying, y=RentLoan)) + 
+  geom_tile(aes(fill = predicted)) + 
+  facet_wrap(~year_pred) +
+  scale_fill_gradient2(high = "#116bfc", mid = "white", low = "red", midpoint = 50) +
+  #geom_hline(aes(yintercept = 0)) + geom_vline(aes(xintercept = 0)) + 
+  theme_bw()
+```
+
+## Education and age profile
+
+In a similar way that we expected Labor's favourable education policies to influence student populations' voter preference, we might expect education levels to behave in the same way - although plots of the raw data do not indicate much of a relationship.
+
+After adjusting for the other socio-demographics, we find that the effect of education level is dependent on the age profile of the electorate, and the number of single parent households. In every election, the effect of education is more negative in electorates with lower median ages, and also becomes more negative with higher incidence of single parent households. For electorates with an average age profile and average proportion of single parent households, higher education levels were significantly linked with support for the Labor party in 2004 and 2007 elections, but insignificant in the others.
+
+If we fix education levels at their means, age has a significant effect in all elections aside from 2004. As education levels increase, the effect of median age becomes more positive across all years.
+
+```{r}
+## Voting against Educ
+data_mod %>% ggplot(aes(x = Educ, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year) + ggtitle("Educ")
+```
+
+
+```{r}
+p16 <- visreg(fit_ss_16, "MedianAge", by = "Educ", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "MedianAge", by = "Educ", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "MedianAge", by = "Educ", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "MedianAge", by = "Educ", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "MedianAge", by = "Educ", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "MedianAge", by = "Educ", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
+```
+
+### Single parent households and education
+
+Labor often propose policies that benefit families, and particularly single parent families. The raw plots indicate that there may be a strong negative relationship between OneParent_House and support for the Liberal party. We find that this is true only for electorates with higher levels of education. For those with mean or lower education, single parent households have no effect on party preference (assuming mean Incomes). 
+
+### Single parent households and education
+
+Incomes also impact the estimated effect of single parent households with the effect on Liberal support being more negative for electorates with lower incomes.
+
+It is plausible that areas with higher income would be somewhat affiliated with the Liberal party - which typically has policies of lower taxes for both individuals and businesses. Or we may believe that it will not have an effect at all, which the raw plots indicate. We find that the effect of Incomes depend on the proportion of single parent households. In electorates with fewer single parent households (at the mean rate or below), Incomes had a negative effect on Liberal vote share in all but 2001. In areas with higher incidence of single parent households, Incomes have no effect.
+
+
+```{r}
+p16 <- visreg(fit_ss_16, "OneParent_House", by = "Educ", gg = T) + ggtitle("2016")
+p13 <- visreg(fit_ss_13, "OneParent_House", by = "Educ", gg = T) + ggtitle("2013")
+p10 <- visreg(fit_ss_10, "OneParent_House", by = "Educ", gg = T) + ggtitle("2010")
+p07 <- visreg(fit_ss_07, "OneParent_House", by = "Educ", gg = T) + ggtitle("2007")
+p04 <- visreg(fit_ss_04, "OneParent_House", by = "Educ", gg = T) + ggtitle("2004")
+p01 <- visreg(fit_ss_01, "OneParent_House", by = "Educ", gg = T) + ggtitle("2001")
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
+```
