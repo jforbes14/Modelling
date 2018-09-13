@@ -202,7 +202,7 @@ all_coefs %>% filter(term == "Born_UK") %>%
 data_mod %>% ggplot(aes(x = Born_UK, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 
 ## Moore
-aug_all %>% bind_cols(data_mod %>% filter(!is.na(Perc_LNP))) %>% select(-ends_with("1")) %>%  filter(Election_Division == "MOORE")
+#aug_all %>% bind_cols(data_mod %>% filter(!is.na(Perc_LNP))) %>% select(-ends_with("1")) %>%  filter(Election_Division == "MOORE")
 
 ```
 

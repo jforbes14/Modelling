@@ -146,7 +146,7 @@ bind_rows(int01, int04, int07, int10, int13, int16) %>%
   arrange(-n) 
 ```
 
-We now add interactions to our model. The selection criteria is having an interaction that significantly improves the model in at least half of the elections (at the 0.5% significance level). We therefore add Educ:MedianAge, CurrentlyStudying:RentLoan, Educ:OneParent_House, Incomes:OneParent_House.
+We now add interactions to our model. The selection criteria is having an interaction that significantly improves the model in at least half of the elections (at the 1% significance level). We therefore add Educ:MedianAge, CurrentlyStudying:RentLoan, Educ:OneParent_House, Incomes:OneParent_House.
 
 
 ```{r}
