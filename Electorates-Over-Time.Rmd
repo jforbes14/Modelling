@@ -1,0 +1,63 @@
+---
+title: "Electorates-Over-Time"
+author: "Jeremy Forbes"
+date: "15/09/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(visreg)
+library(broom)
+library(gridExtra)
+knitr::opts_knit$set(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
+knitr::opts_chunk$set(echo = FALSE)
+load("./Clean-Data/data_mod.rda")
+load("./Clean-Data/superset.rda")
+```
+
+Keep only electorate names that appeared in more than one election.
+
+```{r}
+# Electorates to keep
+keep <- data_mod %>% 
+  filter(!is.na(Perc_LNP)) %>% 
+  group_by(Election_Division) %>% 
+  summarise(n = n()) %>% 
+  filter(n > 1)
+
+# Data
+overtime <- data_mod %>% 
+  filter(!is.na(Perc_LNP)) %>% 
+  filter(Election_Division %in% keep$Election_Division) %>% 
+  select(c(superset$varname), Election_Division, Perc_LNP, Swing, year)
+```
+
+Distribution of TPP vote in these electorates.
+
+```{r}
+# Mean and variance of each electorate
+overtime_dist <- overtime %>% 
+  group_by(Election_Division) %>% 
+  summarise(mean_tpp = mean(Perc_LNP), var_tpp = var(Perc_LNP))
+
+# Graphing TPP votes
+overtime %>% 
+  group_by(Election_Division) %>% 
+  mutate(meantpp = mean(Perc_LNP)) %>% 
+  ggplot(aes(x=reorder(Election_Division, -meantpp), y=Perc_LNP)) +
+  geom_line(aes(group = Election_Division)) + 
+  geom_point(col = "red", size = 0.3) +
+  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 6))
+  
+overtime %>% 
+  group_by(Election_Division) %>% 
+  mutate(flip = ifelse((max(Perc_LNP)-50)*(min(Perc_LNP)-50) > 0, 0, 1)) %>% 
+  filter(flip == 1) %>% 
+  ggplot(aes(x=year, y=Perc_LNP)) +
+  geom_line(aes(col = Election_Division, label = Election_Division, group = Election_Division)) +
+  theme(legend.position="none")
+  
+  
+```
+
