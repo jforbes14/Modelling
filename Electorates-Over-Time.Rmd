@@ -49,7 +49,8 @@ overtime %>%
   geom_line(aes(group = Election_Division)) + 
   geom_point(col = "red", size = 0.3) +
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 6))
-  
+
+# Only electorates that changed parties  
 overtime %>% 
   group_by(Election_Division) %>% 
   mutate(flip = ifelse((max(Perc_LNP)-50)*(min(Perc_LNP)-50) > 0, 0, 1)) %>% 
@@ -58,6 +59,16 @@ overtime %>%
   geom_line(aes(col = Election_Division, label = Election_Division, group = Election_Division)) +
   theme(legend.position="none")
   
-  
+# Only electorates that had a swing of over 10%
+overtime %>% 
+  group_by(Election_Division) %>% 
+  mutate(swinger = ifelse(max(abs(Swing)) > 10, 1, 0)) %>% 
+  filter(swinger == 1) %>% 
+  ungroup() %>% 
+  ggplot(aes(x=year, y=Perc_LNP)) +
+  geom_line(aes(col = Election_Division, label = Election_Division, group = Election_Division)) +
+  theme(legend.position="none")
+
 ```
 
+For the electorates with swings over 10%, look at how their socio-demographics are changing.
