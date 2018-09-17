@@ -1,0 +1,437 @@
+---
+title: "Testing-Spatial-Correlation"
+author: "Jeremy Forbes"
+date: "25/08/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(spdep)
+library(rgeos)
+library(oce)
+
+load("/Users/Jeremy/Documents/R/Modelling-Elections/Clean-Data/data_mod.rda")
+data_mod <- data_mod %>% 
+  arrange(year, Election_Division) 
+
+```
+
+## Spatial correlation
+
+I want to test the presence of spatially correlated errors. I expect there to be some level of correlation between errors of neighbouring electorates.
+
+Therefore, the $\bf s$ matrix will have entries $s_{ij} = 1$ if electorates $i$ and $j$ share a common border, otherwise $s_{ij} = 0$. The weight matrix $\bf w$ will have entries $w_{ij} = \frac {s_{ij}} {\sum_{j=1}^N s_{ij}}, s_{ii} = 0$. Use `gDistance` function.
+
+To begin, I will test for spatial correlation in the response $TPP$ using a Moran's I test. I will then test for spatial correlation in the residuals of the fitted superset models. If there is evidence of spatial correlation, I will run a spatial error model using the same superset model.
+
+## Spatial durbin model
+
+Existing literature suggests that omitted variables have a lesser effect on spatial regression models than ordinary least-squares (@Dubin1988, @BrasingtonHite2005, @PaceLeSage2009). Since both included and omitted Census variables are likely to have a spatial structure, that structure should be accounted for in the model. 
+
+This is a sensible approach when there is spatial structure in the response, included observables, excluded observables and unobservables.
+
+### 2016
+
+Distance matrix
+```{r}
+load("/Users/Jeremy/Documents/R/Data/Clean/Maps/simp_abs16.rda")
+simp_abs16@data <- simp_abs16@data %>% 
+  mutate(Election_Division = toupper(CED_NAME)) %>% 
+  dplyr::select(-CED_NAME)
+
+dist_matrix <- function(simp_abs) {
+  dist_mat <- matrix(NA, nrow = 150, ncol = 150)
+  rownames(dist_mat) <- sort(simp_abs$Election_Division)
+  colnames(dist_mat) <- sort(simp_abs$Election_Division)
+  
+  for (i in 1:(nrow(dist_mat)-1)) {
+    rname = rownames(dist_mat)[i]
+    row_poly = simp_abs %>% subset(Election_Division == rname)
+    
+    for (j in (i+1):ncol(dist_mat)) {
+
+      cname = rownames(dist_mat)[j]
+      col_poly = simp_abs %>% subset(Election_Division == cname)
+      dist = suppressWarnings(gDistance(row_poly, col_poly))
+      dist_mat[i,j] = dist
+      
+    }
+    print(i)
+  }
+  
+  # Now copy to lower triange
+  for (i in 2:nrow(dist_mat)) {
+    for (j in 1:(i-1)) {
+      dist_mat[i,j] = dist_mat[j,i]
+    }
+  }
+  
+  # Check it is symmetric
+  if(!isSymmetric(dist_mat)) {
+    print("Warning! Matrix is not symmetric. Error has occured.")
+  }
+  
+  return(dist_mat)
+}
+
+dist_mat16 <- dist_matrix(simp_abs16)
+
+
+# Do for all others
+load("/Users/Jeremy/Documents/R/Data/Clean/Maps/simp_aec13.rda")
+simp_aec13@data <- simp_aec13@data %>% 
+  mutate(Election_Division = toupper(Elect_div)) %>% 
+  dplyr::select(-Elect_div)
+dist_mat13 <- dist_matrix(simp_aec13)
+
+load("/Users/Jeremy/Documents/R/Data/Clean/Maps/simp_aec10.rda")
+simp_aec10@data <- simp_aec10@data %>% 
+  mutate(Election_Division = toupper(ELECT_DIV)) %>% 
+  dplyr::select(-ELECT_DIV)
+dist_mat10 <- dist_matrix(simp_aec10)
+
+load("/Users/Jeremy/Documents/R/Data/Clean/Maps/simp_abs06e07.rda")
+simp_aec07 <- simp_abs06e07
+remove(simp_abs06e07)
+simp_aec07@data <- simp_aec07@data %>% 
+  mutate(Election_Division = toupper(NAME_2007)) %>% 
+  dplyr::select(-NAME_2007)
+simp_aec07@data$Election_Division[which(simp_aec07@data$Election_Division == "PROSPECT")] = "MCMAHON"
+dist_mat07 <- dist_matrix(simp_aec07)
+
+load("/Users/Jeremy/Documents/R/Data/Clean/Maps/simp_abs06e04.rda")
+simp_aec04 <- simp_abs06e04
+remove(simp_abs06e04)
+simp_aec04@data <- simp_aec04@data %>% 
+  mutate(Election_Division = toupper(NAME_2004)) %>% 
+  dplyr::select(-NAME_2004)
+simp_aec04@data$Election_Division[which(simp_aec04@data$Election_Division == "PROSPECT")] = "MCMAHON"
+dist_mat04 <- dist_matrix(simp_aec04)
+
+load("/Users/Jeremy/Documents/R/Data/Clean/Maps/simp_abs01.rda")
+simp_abs01@data <- simp_abs01@data %>% 
+  mutate(Election_Division = toupper(CED_NAME_2001)) %>% 
+  dplyr::select(-CED_NAME_2001)
+simp_abs01@data$Election_Division[which(simp_abs01@data$Election_Division == "PROSPECT")] = "MCMAHON"
+dist_mat01 <- dist_matrix(simp_abs01)
+
+save(dist_mat16, file = "/Users/Jeremy/Documents/R/Data/Clean/Maps/dist_mat16.rda")
+save(dist_mat13, file = "/Users/Jeremy/Documents/R/Data/Clean/Maps/dist_mat13.rda")
+save(dist_mat10, file = "/Users/Jeremy/Documents/R/Data/Clean/Maps/dist_mat10.rda")
+save(dist_mat07, file = "/Users/Jeremy/Documents/R/Data/Clean/Maps/dist_mat07.rda")
+save(dist_mat04, file = "/Users/Jeremy/Documents/R/Data/Clean/Maps/dist_mat04.rda")
+save(dist_mat01, file = "/Users/Jeremy/Documents/R/Data/Clean/Maps/dist_mat01.rda")
+
+```
+
+Turn into $s$ matrix:
+- All 0 distances become 1, and others become 0
+```{r}
+s_mat <- function(dist_mat) {
+  s_mat <- dist_mat
+  
+  for (i in 1:nrow(dist_mat)) {
+    for (j in 1:nrow(dist_mat)) {
+      a = dist_mat[i,j]
+      
+      if (is.na(a)) {
+        b = 0
+      } else {
+        b = ifelse(a == 0, 1, 0)
+      }
+      
+      s_mat[i,j] = b
+      
+    }
+  }
+  
+  return(s_mat)
+}
+
+smat16 <- s_mat(dist_mat16)
+smat13 <- s_mat(dist_mat13)
+smat10 <- s_mat(dist_mat10)
+smat07 <- s_mat(dist_mat07)
+smat04 <- s_mat(dist_mat04)
+smat01 <- s_mat(dist_mat01)
+```
+
+Turn into $w$ matrix:
+- rows must sum to 1
+```{r}
+w_mat <- function(s_mat) {
+  
+  w_mat <- s_mat
+  rsums = rowSums(s_mat)
+  
+  for (i in 1:nrow(s_mat)) {
+    
+    if (!is.na(rsums[i])) {
+          w_mat[i,] <- s_mat[i,]/rsums[i]
+    } else {
+      w_mat[i,] <- s_mat[i,]
+    }
+    
+  }
+  
+  return(w_mat)
+}
+
+wmat16 <- w_mat(smat16)
+wmat13 <- w_mat(smat13)
+wmat10 <- w_mat(smat10)
+wmat07 <- w_mat(smat07)
+wmat04 <- w_mat(smat04)
+
+## Alter 2001 because we don't have TPP for all electorates
+rownames(smat01)[which(!rownames(smat01) %in% (data_mod %>% filter(year == "2001", !is.na(Perc_LNP)))$Election_Division)]
+
+# LEICHHARDT doesn't have any neighbours, so I assign it with Kennedy neighbours (omitted)
+smat01_a <- smat01
+smat01_a["LEICHHARDT", ] <- smat01_a["KENNEDY", ] 
+smat01_a[, "LEICHHARDT"] <- smat01_a[, "KENNEDY"] 
+
+smat01_adj <- smat01_a[which(rownames(smat01_a) %in% (data_mod %>% filter(year == "2001", !is.na(Perc_LNP)))$Election_Division), which(rownames(smat01_a) %in% (data_mod %>% filter(year == "2001", !is.na(Perc_LNP)))$Election_Division)]
+
+wmat01 <- w_mat(smat01_adj)
+```
+
+Turn into listw:
+```{r}
+listw_16 <- mat2listw(wmat16)
+listw_13 <- mat2listw(wmat13)
+listw_10 <- mat2listw(wmat10)
+listw_07 <- mat2listw(wmat07)
+listw_04 <- mat2listw(wmat04)
+listw_01 <- mat2listw(wmat01)
+```
+
+
+Moran's I test:
+- Need to have matrix with information labelled by electorate
+- Ensure that rows match the alphabetical electorate names
+
+```{r}
+# Check electorates match
+sum((data_mod %>% filter(year == "2007"))$Election_Division == rownames(dist_mat07))
+
+# Perc_LNP (Response) has spatial correlation
+moran.test((data_mod %>% filter(year == "2016"))$Perc_LNP, listw_16)
+moran.test((data_mod %>% filter(year == "2013"))$Perc_LNP, listw_13)
+moran.test((data_mod %>% filter(year == "2010"))$Perc_LNP, listw_10)
+moran.test((data_mod %>% filter(year == "2007"))$Perc_LNP, listw_07)
+moran.test((data_mod %>% filter(year == "2004"))$Perc_LNP, listw_04)
+moran.test((data_mod %>% filter(year == "2001", !is.na(Perc_LNP)))$Perc_LNP, listw_01)
+```
+
+There is strong spatial correlation in the response.
+
+Now using the residuals from the superset model
+```{r}
+# Test for spatial correlation in residuals
+moran.test(residuals(fit_ss_16), listw_16)
+moran.test(residuals(fit_ss_13), listw_13)
+moran.test(residuals(fit_ss_10), listw_10)
+moran.test(residuals(fit_ss_07), listw_07)
+moran.test(residuals(fit_ss_04), listw_04)
+moran.test(residuals(fit_ss_01), listw_01)
+
+```
+
+There is significant evidence of spatial correlation in the error. This is likely to be due to correlation in omitted variables, as well as unobserved spatial heterogeneity.
+
+Let's confirm this with a 3-NN using centroids
+```{r}
+# Testing correlation in response
+dat2 <- left_join(data_mod %>% filter(year == "2016") %>% dplyr::select(Election_Division, Perc_LNP), simp_abs16@data %>% dplyr::select(long_c, lat_c, Election_Division), by = "Election_Division")
+
+coords_use <- as.matrix(dat2 %>% dplyr::select(long_c, lat_c))
+n_nearneigh = 3
+nnk			<- knearneigh( coords_use, k=n_nearneigh, longlat=TRUE ); #number of nearest neighbours
+	k1 			<- knn2nb( nnk );
+	listwk 		<- nb2listw( k1 ); 
+	matwk			<- nb2mat( k1, style="W", zero.policy=TRUE );
+	
+nnzero(matwk)/NROW(matwk)^2
+
+moran.test(dat2$Perc_LNP, listwk)
+
+# Correlation in residuals of superset model
+moran.test(residuals(fit_ss_16), listwk)
+```
+
+Spatial correlation in errors are significant.
+
+# Estimating a model with spatial correlation
+
+```{r}
+fit_durb_16 <- lagsarlm(formula = Perc_LNP ~ ., 
+                          data = data_mod %>% 
+                            filter(year == "2016") %>% 
+                            dplyr::select(Perc_LNP, (superset$varname %>% as.character)),
+                          listw = listw_16,
+                          type = "mixed",
+                          method = "eigen",
+                          zero.policy = TRUE)
+
+fit_durb_13 <- lagsarlm(formula = Perc_LNP ~ ., 
+                          data = data_mod %>% 
+                            filter(year == "2013") %>% 
+                            dplyr::select(Perc_LNP, (superset$varname %>% as.character)),
+                          listw = listw_13,
+                          type = "mixed",
+                          method = "eigen",
+                          zero.policy = TRUE)
+
+fit_durb_10 <- lagsarlm(formula = Perc_LNP ~ ., 
+                          data = data_mod %>% 
+                            filter(year == "2010") %>% 
+                            dplyr::select(Perc_LNP, (superset$varname %>% as.character)),
+                          listw = listw_10,
+                          type = "mixed",
+                          method = "eigen",
+                          zero.policy = TRUE)
+
+fit_durb_07 <- lagsarlm(formula = Perc_LNP ~ ., 
+                          data = data_mod %>% 
+                            filter(year == "2007") %>% 
+                            dplyr::select(Perc_LNP, (superset$varname %>% as.character)),
+                          listw = listw_07,
+                          type = "mixed",
+                          method = "eigen",
+                          zero.policy = TRUE)
+
+fit_durb_04 <- lagsarlm(formula = Perc_LNP ~ ., 
+                          data = data_mod %>% 
+                            filter(year == "2004") %>% 
+                            dplyr::select(Perc_LNP, (superset$varname %>% as.character)),
+                          listw = listw_04,
+                          type = "mixed",
+                          method = "eigen",
+                          zero.policy = TRUE)
+
+fit_durb_01 <- lagsarlm(formula = Perc_LNP ~ ., 
+                          data = data_mod %>% 
+                            filter(year == "2001", !is.na(Perc_LNP)) %>% 
+                            dplyr::select(Perc_LNP, (superset$varname %>% as.character)),
+                          listw = listw_01,
+                          type = "mixed",
+                          method = "eigen",
+                          zero.policy = TRUE)
+```
+
+## Moran's Scatterplot
+Identify electorates with results that differ from its neighbours
+
+```{r}
+moran.plot(x = (data_mod %>% filter(year == "2016"))$Perc_LNP, listw = listw_16)
+moran.plot(x = (data_mod %>% filter(year == "2013"))$Perc_LNP, listw = listw_13)
+moran.plot(x = (data_mod %>% filter(year == "2010"))$Perc_LNP, listw = listw_10)
+moran.plot(x = (data_mod %>% filter(year == "2007"))$Perc_LNP, listw = listw_07)
+moran.plot(x = (data_mod %>% filter(year == "2004"))$Perc_LNP, listw = listw_04)
+moran.plot(x = (data_mod %>% filter(year == "2001", !is.na(Perc_LNP)))$Perc_LNP, listw = listw_01)
+```
+
+## Marginal Effects
+
+Three impact measures suggested by Pace and LeSage (2009) 
+
+```{r}
+impacts_16 <- impacts(fit_durb_16, listw = listw_16)
+
+# Bayesian
+W = as(listw_16, "CsparseMatrix")
+trMC = trW(W, type = "MC")
+impacts_16 <- impacts(fit_durb_16, tr = trMC)
+
+summary(impacts_16, zstats = TRUE)
+impacts_13 <- impacts(fit_durb_13, listw = listw_13)
+impacts_10 <- impacts(fit_durb_10, listw = listw_10)
+impacts_07 <- impacts(fit_durb_07, listw = listw_07)
+impacts_04 <- impacts(fit_durb_04, listw = listw_04)
+impacts_01 <- impacts(fit_durb_01, listw = listw_01)
+
+impact_df <- bind_rows(
+  data.frame(varname = attr(impacts_16, "bnames"), direct = impacts_16$direct, indirect = impacts_16$indirect, total = impacts_16$total, year = "2016"),
+  data.frame(varname = attr(impacts_13, "bnames"), direct = impacts_13$direct, indirect = impacts_13$indirect, total = impacts_13$total, year = "2013"),
+  data.frame(varname = attr(impacts_10, "bnames"), direct = impacts_10$direct, indirect = impacts_10$indirect, total = impacts_10$total, year = "2010"),
+  data.frame(varname = attr(impacts_07, "bnames"), direct = impacts_07$direct, indirect = impacts_07$indirect, total = impacts_07$total, year = "2007"),
+  data.frame(varname = attr(impacts_04, "bnames"), direct = impacts_04$direct, indirect = impacts_04$indirect, total = impacts_04$total, year = "2004"),
+  data.frame(varname = attr(impacts_01, "bnames"), direct = impacts_01$direct, indirect = impacts_01$indirect, total = impacts_01$total, year = "2001"))
+
+```
+
+```{r}
+impact_df %>%
+  gather(key = "effect", value = "estimate", -c(year,varname)) %>% 
+  filter(effect == "direct") %>% 
+  ggplot(aes(x=year, y=estimate)) + 
+  geom_hline(aes(yintercept = 0)) +
+  geom_point(aes(col = effect)) +
+  geom_line(aes(col = effect, group = effect)) +
+  facet_wrap(~varname)
+```
+
+Compute likelihood ratio tests for omitting a variable:
+
+```{r}
+fit = fit_durb_16
+listw = listw_16
+
+drop1_sarlm <- function(fit, listw) {
+  # Data
+  data = data.frame(Perc_LNP = fit$y, fit$X) %>% 
+    dplyr::select(-c(starts_with("X"), starts_with("lag")))
+  
+  # Variable names
+  varname = names(data)[-1]
+  nvar = length(varname)
+  
+  # Set up output df
+  results = data.frame(omitted.varname = c("None", varname),
+                       AIC = c(AIC(fit), rep(0,nvar)),
+                       logLik = c(logLik(fit), rep(0,nvar)),
+                       lrstat = c(NA, rep(0, nvar)),
+                       df = c(NA, rep(0, nvar)),
+                       p = c(NA, rep(0,nvar))
+                       )
+  
+  for (i in 1:nvar) {
+    # Omitted variable name
+    var = varname[i]
+    
+    # Data without omitted variable
+    data_model = data[,-(i+1)] 
+  
+    # Formula
+    full_formula = fit$call$formula
+    
+    # Model
+    fit_drop1 <- lagsarlm(
+      formula = full_formula,
+      data = data_model,
+      listw = listw,
+      method = "eigen",
+      zero.policy = TRUE
+    )
+    
+    # AIC, logLik and p-value (LR test)
+    lr.obj <- LR.sarlm(fit, fit_drop1)
+    
+    results$AIC[i+1] = AIC(fit_drop1)
+    results$logLik[i+1] = logLik(fit_drop1)
+    results$lrstat[i+1] = lr.obj$statistic
+    results$df[i+1] = lr.obj$parameter
+    results$p[i+1] = lr.obj$p.value
+  
+  }
+  
+  return(results)
+  
+}
+
+drop1_sarlm(fit_durb_16, listw_16)
+```
+
