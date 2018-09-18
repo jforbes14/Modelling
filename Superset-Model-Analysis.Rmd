@@ -14,40 +14,41 @@ knitr::opts_knit$set(root.dir = "/Users/Jeremy/Documents/R/Modelling-Elections")
 knitr::opts_chunk$set(echo = FALSE)
 load("./Clean-Data/data_mod.rda")
 load("./Clean-Data/superset.rda")
+load("./Clean-Data/superset_adj.rda")
 ```
 
 ## Fitting models
 Can re-run so this .Rmd is not dependent on Superset-Models.Rmd
 ```{r}
-fit_ss_16 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_16 <- lm(Perc_LNP ~ . , 
                 data = data_mod %>% 
                   filter(year == "2016") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
-fit_ss_13 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_13 <- lm(Perc_LNP ~ . , 
                 data = data_mod %>% 
                   filter(year == "2013") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
-fit_ss_10 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_10 <- lm(Perc_LNP ~ . , 
                 data = data_mod %>% 
                   filter(year == "2010") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
-fit_ss_07 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_07 <- lm(Perc_LNP ~ . , 
                 data = data_mod %>% 
                   filter(year == "2007") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
-fit_ss_04 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_04 <- lm(Perc_LNP ~ . , 
                 data = data_mod %>% 
                   filter(year == "2004") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
-fit_ss_01 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_01 <- lm(Perc_LNP ~ . , 
                 data = data_mod %>% 
                   filter(year == "2001") %>% 
-                  select(Perc_LNP, (superset$varname %>% as.character)))
+                  select(Perc_LNP, (superset_adj$varname %>% as.character)))
 
 # augment
 aug_all <- bind_rows(augment(fit_ss_01) %>% mutate(year = "2001"), 
@@ -439,6 +440,11 @@ p04 <- visreg(fit_ss_04, "OneParent_House", by = "Incomes", gg = T) + ggtitle("2
 p01 <- visreg(fit_ss_01, "OneParent_House", by = "Incomes", gg = T) + ggtitle("2001")
 
 grid.arrange(p01, p04, p07, p10, p13, p16)
+
+p1 <- visreg2d(fit_ss_16, "OneParent_House", "Incomes", plot.type = "gg", type = "contrast") + ggtitle("2016") + scale_colour_gradient2(limits = c(25,75))
+p2 <- visreg2d(fit_ss_13, "OneParent_House", "Incomes", plot.type = "gg", type = "contrast") + ggtitle("2013") + scale_colour_gradient2(limits = c(25,75))
+
+grid.arrange(p1, p2)
 
 ## Voting against OneParent_House
 data_mod %>% ggplot(aes(x = OneParent_House, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
