@@ -26,18 +26,15 @@ superset_AW_vars <- var_imp_all %>%
   ungroup() %>% 
   select(var, varname) %>% 
   unique()
+
+superset <- superset_AW_vars
 ```
 
-Model-averaged coefficients top 5
+Top 4 plus three fixed
 
 ```{r}
 # Top 5 variables
-superset_SC_vars <- std_coef_all %>% 
-  group_by(year) %>% 
-  top_n(n = 5, wt = abs(avg_coef)) %>%
-  ungroup() %>% 
-  select(var, varname)  %>% 
-  unique()
+superset_adj 
 
 ```
 
@@ -58,32 +55,32 @@ Models with no interactions
 fit_ss_16_noint <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2016") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
 fit_ss_13_noint <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2013") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
 fit_ss_10_noint <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2010") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
 fit_ss_07_noint <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2007") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
 fit_ss_04_noint <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2004") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
 fit_ss_01_noint <- lm(Perc_LNP ~ ., 
                 data = data_mod %>% 
                   filter(year == "2001") %>% 
-                  select(Perc_LNP, (superset$varname %>% as.character)))
+                  select(Perc_LNP, (superset_adj$varname %>% as.character)))
 ```
 
 
@@ -144,41 +141,83 @@ bind_rows(int01, int04, int07, int10, int13, int16) %>%
   group_by(interact_var1, interact_var2) %>% 
   summarise(n = n()) %>% 
   arrange(-n) 
+
+## Adding first interaction
+int16 <- interact_F(update(fit_ss_16_noint, . ~ . + Educ:MedianAge)) %>% mutate(year = "2016")
+int13 <- interact_F(update(fit_ss_13_noint, . ~ . + Educ:MedianAge)) %>% mutate(year = "2013") 
+int10 <- interact_F(update(fit_ss_10_noint, . ~ . + Educ:MedianAge)) %>% mutate(year = "2010") 
+int07 <- interact_F(update(fit_ss_07_noint, . ~ . + Educ:MedianAge)) %>% mutate(year = "2007") 
+int04 <- interact_F(update(fit_ss_04_noint, . ~ . + Educ:MedianAge)) %>% mutate(year = "2004") 
+int01 <- interact_F(update(fit_ss_01_noint, . ~ . + Educ:MedianAge)) %>% mutate(year = "2001") 
+
+bind_rows(int01, int04, int07, int10, int13, int16) %>% 
+  filter(pvalue < 0.01) %>% 
+  group_by(interact_var1, interact_var2) %>% 
+  summarise(n = n()) %>% 
+  arrange(-n) 
+
+## Adding second interaction
+int16 <- interact_F(update(fit_ss_16_noint, . ~ . + Educ:MedianAge + Extractive:Educ)) %>% mutate(year = "2016")
+int13 <- interact_F(update(fit_ss_13_noint, . ~ . + Educ:MedianAge + Extractive:Educ)) %>% mutate(year = "2013") 
+int10 <- interact_F(update(fit_ss_10_noint, . ~ . + Educ:MedianAge + Extractive:Educ)) %>% mutate(year = "2010") 
+int07 <- interact_F(update(fit_ss_07_noint, . ~ . + Educ:MedianAge + Extractive:Educ)) %>% mutate(year = "2007") 
+int04 <- interact_F(update(fit_ss_04_noint, . ~ . + Educ:MedianAge + Extractive:Educ)) %>% mutate(year = "2004") 
+int01 <- interact_F(update(fit_ss_01_noint, . ~ . + Educ:MedianAge + Extractive:Educ)) %>% mutate(year = "2001") 
+
+bind_rows(int01, int04, int07, int10, int13, int16) %>% 
+  filter(pvalue < 0.01) %>% 
+  group_by(interact_var1, interact_var2) %>% 
+  summarise(n = n()) %>% 
+  arrange(-n) 
+
+## Adding third
+int16 <- interact_F(update(fit_ss_16_noint, . ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House)) %>% mutate(year = "2016")
+int13 <- interact_F(update(fit_ss_13_noint, . ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House)) %>% mutate(year = "2013") 
+int10 <- interact_F(update(fit_ss_10_noint, . ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House)) %>% mutate(year = "2010") 
+int07 <- interact_F(update(fit_ss_07_noint, . ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House)) %>% mutate(year = "2007") 
+int04 <- interact_F(update(fit_ss_04_noint, . ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House)) %>% mutate(year = "2004") 
+int01 <- interact_F(update(fit_ss_01_noint, . ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House)) %>% mutate(year = "2001") 
+
+bind_rows(int01, int04, int07, int10, int13, int16) %>% 
+  filter(pvalue < 0.01) %>% 
+  group_by(interact_var1, interact_var2) %>% 
+  summarise(n = n()) %>% 
+  arrange(-n) 
 ```
 
-We now add interactions to our model. The selection criteria is having an interaction that significantly improves the model in at least half of the elections (at the 1% significance level). We therefore add Educ:MedianAge, CurrentlyStudying:RentLoan, Educ:OneParent_House, Incomes:OneParent_House.
+We now iterate by adding the interaction that is significant in most years. First we choose MedianAge:Educ, then Extractive:Educ and OneParent_House:Educ. Now we see that no interaction is significant in at least half of the elections (at the 1% level).
 
 
 ```{r}
-fit_ss_16 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_16 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House, 
                 data = data_mod %>% 
                   filter(year == "2016") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
-fit_ss_13 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_13 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House, 
                 data = data_mod %>% 
                   filter(year == "2013") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
-fit_ss_10 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_10 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House, 
                 data = data_mod %>% 
                   filter(year == "2010") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
-fit_ss_07 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_07 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House, 
                 data = data_mod %>% 
                   filter(year == "2007") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
-fit_ss_04 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_04 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House, 
                 data = data_mod %>% 
                   filter(year == "2004") %>% 
-                  select(Perc_LNP,  (superset$varname %>% as.character)))
+                  select(Perc_LNP,  (superset_adj$varname %>% as.character)))
 
-fit_ss_01 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_01 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:Educ + Educ:OneParent_House, 
                 data = data_mod %>% 
                   filter(year == "2001") %>% 
-                  select(Perc_LNP, (superset$varname %>% as.character)))
+                  select(Perc_LNP, (superset_adj$varname %>% as.character)))
 ```
 
 These models now have all main effects, plus the four interactions that were significant in at least half of the models. 
@@ -197,8 +236,8 @@ aug_all <- bind_rows(augment(fit_ss_01) %>% mutate(year = "2001"),
 ## Fitted values
 ```{r}
 aug_all %>% 
-  left_join(data_mod %>% select(OtherLanguageHome, year, Election_Division), 
-            by = c("OtherLanguageHome", "year")) %>%
+  left_join(data_mod %>% select(SocialServ, year, Election_Division), 
+            by = c("SocialServ", "year")) %>% 
  # mutate(correct_party = ifelse((.fitted - 50)*(Perc_LNP - 50) >= 0, "Correct", "Incorrect")) %>% 
   ggplot(aes(x=.fitted, y=Perc_LNP)) + 
   geom_abline(col = "blue") + 
@@ -251,14 +290,14 @@ No obvious non-linearities in 2001, 2004, 2007, 2010, 2013, 2016.
 
 ## Residuals vs Predictors not in model
 ```{r}
-vars_not_in <- names(data_mod)[which(!names(data_mod) %in% superset$varname)]
+vars_not_in <- names(data_mod)[which(!names(data_mod) %in% superset_adj$varname)]
 
 aug_all %>% bind_cols(data_mod %>% filter(!is.na(Perc_LNP))) %>% 
-  filter(year == "2016") %>% 
+  filter(year == "2013") %>% 
   select(starts_with("."), c(vars_not_in), -c(Swing, year, Election_Division)) %>% 
   gather(key = "variable", value = "value", -c(starts_with("."), Perc_LNP)) %>%
   ggplot(aes(x = value, y = .resid)) +
-  geom_point() + geom_smooth(level = 0.99) + facet_wrap(~variable, scales = "free")
+  geom_point() + geom_smooth(level = 0.95) + facet_wrap(~variable, scales = "free")
 ```
 
 No obvious patterns in the residuals vs omitted variables.
@@ -269,10 +308,10 @@ No obvious patterns in the residuals vs omitted variables.
 aug_all %>% 
   ggplot(aes(x=.cooksd)) + geom_dotplot() + facet_wrap(~year)
 
-aug_all %>% bind_cols(data_mod %>% filter(!is.na(Perc_LNP))) %>% select(-ends_with("1")) %>%  filter(.cooksd > 0.2)
+aug_all %>% bind_cols(data_mod %>% filter(!is.na(Perc_LNP))) %>% select(-ends_with("1")) %>%  filter(.cooksd > 0.1)
 ```
 
-Across the six elections, only Sydney in 2007 has high leverage (cook distance of 0.29). This is due to its strong support for Labor (69.5% of TPP vote), whilst having high RentLoan, NoReligion, Educ, CurrentlyStudying and Incomes. No other electorate in any year has cook distance greater than 0.2. Therefore there are no outliers that should be removed from the model. 
+Across the six elections, only Sydney in 2007 has moderately high leverage (cook distance of 0.140). This is due to its strong support for Labor (69.5% of TPP vote), whilst having high RentLoan, Educ, CurrentlyStudying and Incomes. Sydney also has moderate leverage in 2016 (cook distance of 0.106), as did Kalgoorlie (2004, 0.126) Hunter (2010, 0.112) and Durack (2016, 0.101). Therefore, it does not appear that there are any outliers that should be removed from the model. 
  
 ## Analysis
 
