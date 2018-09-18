@@ -435,3 +435,32 @@ drop1_sarlm <- function(fit, listw) {
 drop1_sarlm(fit_durb_16, listw_16)
 ```
 
+```{r}
+a = proc.time()
+fit_durb_16 <- lagsarlm(formula = Perc_LNP ~ ., 
+                          data = data_mod %>% 
+                            filter(year == "2016") %>% 
+                            dplyr::select(Perc_LNP, (superset$varname %>% as.character)),
+                          listw = listw_16,
+                          type = "mixed",
+                          method = "eigen",
+                          zero.policy = TRUE)
+b = proc.time()
+b-a
+
+
+c = proc.time()
+fit_durb_16 <- lm(formula = Perc_LNP ~ ., 
+                          data = data_mod %>% 
+                            filter(year == "2016") %>% 
+                            dplyr::select(Perc_LNP, (superset$varname %>% as.character)))
+d = proc.time()
+d-c 
+
+```
+
+
+
+Refs:
+https://pdfs.semanticscholar.org/64ab/4ec3a6cb25cb191818c5d65400e6c3697082.pdf
+http://www.econ.uiuc.edu/~lab/workshop/Spatial_in_R.html#testing-for-spatial-autocorrelation
