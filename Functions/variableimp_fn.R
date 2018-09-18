@@ -33,12 +33,12 @@ var_imp <- function(Xway) {
     var_imp[vars, "sum_w"] <- var_imp[vars, "sum_w"] + w
     
     # Add running tally of weighted coefficient
-    var_imp[vars, "coef_wsum"] <- var_imp[vars, "coef_wsum"] + w*(Xway[i, ]$coef %>% unlist)
+    #var_imp[vars, "coef_wsum"] <- var_imp[vars, "coef_wsum"] + w*(Xway[i, ]$coef %>% unlist)
   }
   
   # Compute weighted model average of coeffficient
-  var_imp <- var_imp %>% 
-    mutate(coef_wavg = (coef_wsum / sum_w))
+  #var_imp <- var_imp %>% 
+  #  mutate(coef_wavg = (coef_wsum / sum_w))
   
   return(var_imp)
 }
