@@ -32,6 +32,9 @@ Existing literature suggests that omitted variables have a lesser effect on spat
 
 This is a sensible approach when there is spatial structure in the response, included observables, excluded observables and unobservables.
 
+## Bootstrap SE
+
+
 ### 2016
 
 Distance matrix
@@ -240,7 +243,7 @@ moran.test(residuals(fit_ss_01), listw_01)
 
 ```
 
-There is significant evidence of spatial correlation in the error. This is likely to be due to correlation in omitted variables, as well as unobserved spatial heterogeneity.
+There is significant evidence of spatial correlation in the error. This is likely to be due to correlation in omitted variables and unobserved spatial heterogeneity.
 
 Let's confirm this with a 3-NN using centroids
 ```{r}
