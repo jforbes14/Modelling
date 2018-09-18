@@ -173,86 +173,7 @@ save(var_imp_all, file = "./Clean-Data/var_imp_all.rda")
 
 ```
 
-Or using our alternative - including Educ, Incomes and Unemployed as fixed, and then all four way models on top of that.
 
-```{r}
-
-ss_adj_16 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2016") %>% dplyr::select(Perc_LNP),
-                      x_df = data_mod %>% dplyr::filter(year == "2016") %>% 
-                        dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
-                        scale() %>% 
-                        as.data.frame(),
-                      n_vars = 4)
-
-ss_adj_13 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2013") %>% dplyr::select(Perc_LNP),
-                           x_df = data_mod %>% dplyr::filter(year == "2013") %>% 
-                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
-                             scale() %>% 
-                             as.data.frame(),
-                           n_vars = 4)
-
-ss_adj_10 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2010") %>% dplyr::select(Perc_LNP),
-                           x_df = data_mod %>% dplyr::filter(year == "2010") %>% 
-                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
-                             scale() %>% 
-                             as.data.frame(),
-                           n_vars = 4)
-
-ss_adj_07 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2007") %>% dplyr::select(Perc_LNP),
-                           x_df = data_mod %>% dplyr::filter(year == "2007") %>% 
-                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
-                             scale() %>% 
-                             as.data.frame(),
-                           n_vars = 4)
-
-ss_adj_04 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2004") %>% dplyr::select(Perc_LNP),
-                           x_df = data_mod %>% dplyr::filter(year == "2004") %>% 
-                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
-                             scale() %>% 
-                             as.data.frame(),
-                           n_vars = 4)
-
-ss_adj_01 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2001") %>% dplyr::select(Perc_LNP),
-                           x_df = data_mod %>% dplyr::filter(year == "2001") %>% 
-                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
-                             scale() %>% 
-                             as.data.frame(),
-                           n_vars = 4)
-
-#save(ss_adj_16, file = "./Clean-Data/ss_adj_16.rda")
-#save(ss_adj_13, file = "./Clean-Data/ss_adj_13.rda")
-#save(ss_adj_10, file = "./Clean-Data/ss_adj_10.rda")
-#save(ss_adj_07, file = "./Clean-Data/ss_adj_07.rda")
-#save(ss_adj_04, file = "./Clean-Data/ss_adj_04.rda")
-#save(ss_adj_01, file = "./Clean-Data/ss_adj_01.rda")
-
-
-# Name vars
-name_vars2 <- data.frame(var = 1:ncol(x_df_use), 
-                         varname = names(x_df_use))
-
-
-# Variable importance
-var_imp_adj <- rbind(var_imp(ss_adj_16) %>% mutate(year = "2016"),
-                     var_imp(ss_adj_13) %>% mutate(year = "2013"),
-                     var_imp(ss_adj_10) %>% mutate(year = "2010"),
-                     var_imp(ss_adj_07) %>% mutate(year = "2007"),
-                     var_imp(ss_adj_04) %>% mutate(year = "2004"),
-                     var_imp(ss_adj_01) %>% mutate(year = "2001")) 
-
-superset_adj <- var_imp_adj %>% 
-  left_join(name_vars2, by = "var") %>% 
-  arrange(year, -sum_w) %>% 
-#  filter(!varname %in% c("Unemployed", "Incomes", "Educ")) %>% 
-  group_by(year) %>% 
-  top_n(n = 7, wt = sum_w) %>% 
-  ungroup() %>% 
-  group_by(varname) %>% 
-  summarise(n = n()) %>%
-  select(varname)
-
-save(superset_adj, file = "./Clean-Data/superset_adj.rda")
-```
 
 
 
@@ -446,3 +367,87 @@ interaction_SC_df %>%
 ```
 
 Including interactions does not change our conclusions of variable importance significantly. The most important variables stay mostly similar (using 2016 as our test).
+
+
+## Junk
+
+Or using our alternative - including Educ, Incomes and Unemployed as fixed, and then all four way models on top of that.
+
+```{r}
+
+ss_adj_16 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2016") %>% dplyr::select(Perc_LNP),
+                      x_df = data_mod %>% dplyr::filter(year == "2016") %>% 
+                        dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                        scale() %>% 
+                        as.data.frame(),
+                      n_vars = 4)
+
+ss_adj_13 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2013") %>% dplyr::select(Perc_LNP),
+                           x_df = data_mod %>% dplyr::filter(year == "2013") %>% 
+                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                             scale() %>% 
+                             as.data.frame(),
+                           n_vars = 4)
+
+ss_adj_10 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2010") %>% dplyr::select(Perc_LNP),
+                           x_df = data_mod %>% dplyr::filter(year == "2010") %>% 
+                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                             scale() %>% 
+                             as.data.frame(),
+                           n_vars = 4)
+
+ss_adj_07 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2007") %>% dplyr::select(Perc_LNP),
+                           x_df = data_mod %>% dplyr::filter(year == "2007") %>% 
+                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                             scale() %>% 
+                             as.data.frame(),
+                           n_vars = 4)
+
+ss_adj_04 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2004") %>% dplyr::select(Perc_LNP),
+                           x_df = data_mod %>% dplyr::filter(year == "2004") %>% 
+                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                             scale() %>% 
+                             as.data.frame(),
+                           n_vars = 4)
+
+ss_adj_01 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2001") %>% dplyr::select(Perc_LNP),
+                           x_df = data_mod %>% dplyr::filter(year == "2001") %>% 
+                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                             scale() %>% 
+                             as.data.frame(),
+                           n_vars = 4)
+
+#save(ss_adj_16, file = "./Clean-Data/ss_adj_16.rda")
+#save(ss_adj_13, file = "./Clean-Data/ss_adj_13.rda")
+#save(ss_adj_10, file = "./Clean-Data/ss_adj_10.rda")
+#save(ss_adj_07, file = "./Clean-Data/ss_adj_07.rda")
+#save(ss_adj_04, file = "./Clean-Data/ss_adj_04.rda")
+#save(ss_adj_01, file = "./Clean-Data/ss_adj_01.rda")
+
+
+# Name vars
+name_vars2 <- data.frame(var = 1:ncol(x_df_use), 
+                         varname = names(x_df_use))
+
+
+# Variable importance
+var_imp_adj <- rbind(var_imp(ss_adj_16) %>% mutate(year = "2016"),
+                     var_imp(ss_adj_13) %>% mutate(year = "2013"),
+                     var_imp(ss_adj_10) %>% mutate(year = "2010"),
+                     var_imp(ss_adj_07) %>% mutate(year = "2007"),
+                     var_imp(ss_adj_04) %>% mutate(year = "2004"),
+                     var_imp(ss_adj_01) %>% mutate(year = "2001")) 
+
+superset_adj <- var_imp_adj %>% 
+  left_join(name_vars2, by = "var") %>% 
+  arrange(year, -sum_w) %>% 
+#  filter(!varname %in% c("Unemployed", "Incomes", "Educ")) %>% 
+  group_by(year) %>% 
+  top_n(n = 7, wt = sum_w) %>% 
+  ungroup() %>% 
+  group_by(varname) %>% 
+  summarise(n = n()) %>%
+  select(varname)
+
+save(superset_adj, file = "./Clean-Data/superset_adj.rda")
+```
