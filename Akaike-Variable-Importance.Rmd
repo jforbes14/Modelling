@@ -173,6 +173,89 @@ save(var_imp_all, file = "./Clean-Data/var_imp_all.rda")
 
 ```
 
+Or using our alternative - including Educ, Incomes and Unemployed as fixed, and then all four way models on top of that.
+
+```{r}
+
+ss_adj_16 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2016") %>% dplyr::select(Perc_LNP),
+                      x_df = data_mod %>% dplyr::filter(year == "2016") %>% 
+                        dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                        scale() %>% 
+                        as.data.frame(),
+                      n_vars = 4)
+
+ss_adj_13 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2013") %>% dplyr::select(Perc_LNP),
+                           x_df = data_mod %>% dplyr::filter(year == "2013") %>% 
+                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                             scale() %>% 
+                             as.data.frame(),
+                           n_vars = 4)
+
+ss_adj_10 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2010") %>% dplyr::select(Perc_LNP),
+                           x_df = data_mod %>% dplyr::filter(year == "2010") %>% 
+                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                             scale() %>% 
+                             as.data.frame(),
+                           n_vars = 4)
+
+ss_adj_07 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2007") %>% dplyr::select(Perc_LNP),
+                           x_df = data_mod %>% dplyr::filter(year == "2007") %>% 
+                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                             scale() %>% 
+                             as.data.frame(),
+                           n_vars = 4)
+
+ss_adj_04 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2004") %>% dplyr::select(Perc_LNP),
+                           x_df = data_mod %>% dplyr::filter(year == "2004") %>% 
+                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                             scale() %>% 
+                             as.data.frame(),
+                           n_vars = 4)
+
+ss_adj_01 <- all_X_way_adj(y_vec =  data_mod %>% dplyr::filter(year == "2001") %>% dplyr::select(Perc_LNP),
+                           x_df = data_mod %>% dplyr::filter(year == "2001") %>% 
+                             dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
+                             scale() %>% 
+                             as.data.frame(),
+                           n_vars = 4)
+
+#save(ss_adj_16, file = "./Clean-Data/ss_adj_16.rda")
+#save(ss_adj_13, file = "./Clean-Data/ss_adj_13.rda")
+#save(ss_adj_10, file = "./Clean-Data/ss_adj_10.rda")
+#save(ss_adj_07, file = "./Clean-Data/ss_adj_07.rda")
+#save(ss_adj_04, file = "./Clean-Data/ss_adj_04.rda")
+#save(ss_adj_01, file = "./Clean-Data/ss_adj_01.rda")
+
+
+# Name vars
+name_vars2 <- data.frame(var = 1:ncol(x_df_use), 
+                         varname = names(x_df_use))
+
+
+# Variable importance
+var_imp_adj <- rbind(var_imp(ss_adj_16) %>% mutate(year = "2016"),
+                     var_imp(ss_adj_13) %>% mutate(year = "2013"),
+                     var_imp(ss_adj_10) %>% mutate(year = "2010"),
+                     var_imp(ss_adj_07) %>% mutate(year = "2007"),
+                     var_imp(ss_adj_04) %>% mutate(year = "2004"),
+                     var_imp(ss_adj_01) %>% mutate(year = "2001")) 
+
+superset_adj <- var_imp_adj %>% 
+  left_join(name_vars2, by = "var") %>% 
+  arrange(year, -sum_w) %>% 
+#  filter(!varname %in% c("Unemployed", "Incomes", "Educ")) %>% 
+  group_by(year) %>% 
+  top_n(n = 7, wt = sum_w) %>% 
+  ungroup() %>% 
+  group_by(varname) %>% 
+  summarise(n = n()) %>%
+  select(varname)
+
+save(superset_adj, file = "./Clean-Data/superset_adj.rda")
+```
+
+
+
 ## Sum of Akaike Weights for Most Imporant variables
 
 ```{r}
@@ -191,58 +274,6 @@ var_imp_all %>%
 Write a bit about the Akaike weights and how summing infers variable importance. Look at the distribution of weights for the 5 variable models. We find that the model with minimum AIC dominates the weights, so it may not be such a good measure.
 
 Let's try looking at the standardized coefficients.
-
-## Standardized coefficients
-
-Uses *std_coef_fn.R*.
-
-```{r}
-std_coef_2016 <- fiveway_2016 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
-
-std_coef_2013 <- fiveway_2013 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
-
-std_coef_2010 <- fiveway_2010 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
-
-std_coef_2007 <- fiveway_2007 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
-
-std_coef_2004 <- fiveway_2004 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
-
-std_coef_2001 <- fiveway_2001 %>% unnest %>% group_by(vars) %>% summarise(avg_coef = mean(coef))
-
-```
-
-```{r}
-## Combine and add variable names
-name_vars <- data.frame(var = 1:ncol(x16), varname = names(x16))
-
-std_coef_all <- rbind(std_coef_2016 %>% mutate(year = "2016"), 
-                      std_coef_2013 %>% mutate(year = "2013"),
-                      std_coef_2010 %>% mutate(year = "2010"), 
-                      std_coef_2007 %>% mutate(year = "2007"), 
-                      std_coef_2004 %>% mutate(year = "2004"), 
-                      std_coef_2001 %>% mutate(year = "2001")) %>% 
-  rename(var = vars) %>% 
-  left_join(name_vars, by = "var")
-
-save(std_coef_all, file = "./Clean-Data/std_coef_all.rda")
-
-#std_coef_all %>%
-#  filter(year == "2016") %>% 
-#  mutate(snr = avg_coef/(variance_coef^0.5)) %>% #signal to noise ratio
-#  ggplot(aes(x=reorder(varname %>% as.character(), snr), y=snr)) + 
-#  ggplot(aes(x=reorder(varname %>% as.character(), abs(-avg_coef)), y=abs(avg_coef))) + 
-#  geom_line(aes(group = varname)) +
-#  geom_point(aes(col = year, label = varname)) + 
-#  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12)) + facet_wrap(~year)
-
-std_coef_all %>% 
-  arrange(year, -abs(avg_coef)) %>% 
-  group_by(year) %>% 
-  select(varname, avg_coef, year) %>% 
-  top_n(wt = abs(avg_coef), n = 5) %>% 
-  group_by(varname) %>% 
-  count(n = n())
-```
 
 ## Begin
 
@@ -271,13 +302,6 @@ The numerator can be interpreted as the likelihood of model $i$, and hence $w_i$
 
 
 
-# Can we even do this?
-
-Testing all possible models can be used to generate a set of best models as long as there is an ecological justification why these models make sense.
-
-Exploratory analysis using stepwise or model selection based on all possible models cannot be reliably made (Grace 2006).
-
-Hypothesis set (of models) is ususally (often) informed by existing research.
 
 
 # Junk
@@ -371,39 +395,6 @@ allXway_std_coef_2016 %>% left_join(name_vars, by = "var") %>%
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 
 
-```
-
-
-# More on standardized coefficients
-
-
-
-## Standardized Coefficients
-
-
-Multimodel inference
-- We have a model that clearly is better than the rest (w > 0.9)
-- Shouldn't be looking at model-averaged coefficients because of how convincing this is
-- However, we are not interested in *just* using 5 variables
-
-Elastic Net
-
-To determine variable importance amongst using the set of all possible five variable combinations for each election. 142506 models 
-
-All variables in our model set have been scaled to have variance of one, and centered to zero. The coefficients can be thought of as *standardized coefficients* - as a one standard deviation increase in regressor $p$ results in a $\beta_p$ increase in the response [@model-vis]. This is very beneficial, as we can compare the relative effects of regressors within a model, and estimated effects across models [@Schielzth2010].
-
-For each election, we can infer variable importance based on comparing the distributions of standardized coefficients. An important variable should have a distribution large (absolute) mean and low variance.
-
-In 2016, we see that 
-
-```{r}
-std_coef_all %>%
-  filter(year == "2016") %>% 
-  select(varname, coef, avg_coef, year) %>% 
-  unnest(coef) %>%
-  ggplot(aes(x = reorder(varname, abs(avg_coef)), y = coef)) + 
-  geom_violin() +
-  theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 ```
 
 ## Adding iteractions to all three-way combinations and seeing if conclusions of variable importance change
