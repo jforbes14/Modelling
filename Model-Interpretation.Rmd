@@ -5,6 +5,8 @@ date: "13/09/2018"
 output: html_document
 ---
 
+This is the main file for model interpretation and analysis. Other files (superset-model-analysis and stories-from-superset-models) contain bits and pieces of thoughts and plots but all is consolidated here.
+
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(broom)
@@ -19,32 +21,32 @@ knitr::opts_chunk$set(echo = FALSE, results = FALSE)
 ```
 
 ```{r}
-fit_ss_16 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_16 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:ManagerAdminClericalSales + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
                 data = data_mod %>% 
                   filter(year == "2016") %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
-fit_ss_13 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_13 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:ManagerAdminClericalSales + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
                 data = data_mod %>% 
                   filter(year == "2013") %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
-fit_ss_10 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_10 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:ManagerAdminClericalSales + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
                 data = data_mod %>% 
                   filter(year == "2010") %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
-fit_ss_07 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_07 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:ManagerAdminClericalSales + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
                 data = data_mod %>% 
                   filter(year == "2007") %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
-fit_ss_04 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_04 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:ManagerAdminClericalSales + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
                 data = data_mod %>% 
                   filter(year == "2004") %>% 
                   select(Perc_LNP,  (superset$varname %>% as.character)))
 
-fit_ss_01 <- lm(Perc_LNP ~ . + Educ:MedianAge + CurrentlyStudying:RentLoan + Educ:OneParent_House + Incomes:OneParent_House, 
+fit_ss_01 <- lm(Perc_LNP ~ . + Educ:MedianAge + Extractive:ManagerAdminClericalSales + Educ:OneParent_House + Educ:ManagerAdminClericalSales, 
                 data = data_mod %>% 
                   filter(year == "2001") %>% 
                   select(Perc_LNP, (superset$varname %>% as.character)))
