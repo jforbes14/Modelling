@@ -165,20 +165,166 @@ all_coefs %>% filter(term == "NoReligion") %>%
 ```{r}
 ## Voting against Educ
 data_mod %>% ggplot(aes(x = Educ, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+## Voting against MedianAge
+data_mod %>% ggplot(aes(x = MedianAge, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
 
 ```
 
 
-In a similar way that we expected Labor's favourable education policies to influence student populations' voter preference, we might expect education levels to behave in the same way - although the scatterplots do not indicate much of a relationship.
+In a similar way that we expected Labor's favourable education policies to influence student populations' voter preference, we might expect education levels to behave in the same way - although the scatterplots do not indicate much of a relationship. On the contrary, older age profiles (higher median age) appear to have a strong relationship with Liberal support.
 
-We include an interaction between education and median age in our model. 
+We find that the electorates with below-average age profiles and above-average levels of education consistently have higher levels of support for the Labor party. Up until 2016, areas with lower education levels were unaffected by age and supported the Liberal party, whereas in 2016 younger electorates supported the Labor party - even with low levels of education. Overall, it is clear the young electorates with higher education levels have always supported Labor, and older electorates with lower education levels have always supported the Liberal party. 
 
-If we fix both of these interacted variables at their means, we find that the main effect of education is slightly or moderately negative in each each election. The effect of education becomes more negative in electorates with lower median ages, and also becomes more negative with higher incidence of single parent households. Therefore, higher education will be most associated with the Liberal party in older electorates with few single parent households, whereas higher education will be most assocated with the Labor party in younger electorates with more single parent households. This is true for every election.
+
+```{r}
+grid_industry <- data.frame(Educ = rep(seq(-1.5,4, by = 0.05), times = 121),
+                            MedianAge = rep(seq(-3,3, by = 0.05), each = 111),
+                            Extractive = 0, ManagerAdminClericalSales = 0, Born_SE_Europe = 0, RentLoan = 0, 
+                            NoReligion = 0, OneParent_House = 0, Born_UK = 0, CurrentlyStudying = 0)
+grid_industry$z16 = predict(fit_ss_16, grid_industry)
+grid_industry$z13 = predict(fit_ss_13, grid_industry)
+grid_industry$z10 = predict(fit_ss_10, grid_industry)
+grid_industry$z07 = predict(fit_ss_07, grid_industry)
+grid_industry$z04 = predict(fit_ss_04, grid_industry)
+grid_industry$z01 = predict(fit_ss_01, grid_industry)
+
+p16 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=MedianAge)) + 
+  geom_raster(aes(fill = z16)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z16), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z16)))) +
+  geom_point(data = data_mod %>% filter(year == "2016"), alpha = 0.5)
+
+p13 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=MedianAge)) + 
+  geom_raster(aes(fill = z13)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z13), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z13)))) +
+  geom_point(data = data_mod %>% filter(year == "2013"), alpha = 0.5)
+
+
+p10 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=MedianAge)) + 
+  geom_raster(aes(fill = z10)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z10), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z10)))) +
+  geom_point(data = data_mod %>% filter(year == "2010"), alpha = 0.5)
+
+p07 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=MedianAge)) + 
+  geom_raster(aes(fill = z07)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z07), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z07)))) +
+  geom_point(data = data_mod %>% filter(year == "2007"), alpha = 0.5)
+
+p04 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=MedianAge)) + 
+  geom_raster(aes(fill = z04)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z04), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z04)))) +
+  geom_point(data = data_mod %>% filter(year == "2004"), alpha = 0.5)
+
+p01 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=MedianAge)) + 
+  geom_raster(aes(fill = z01)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z01), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z01)))) +
+  geom_point(data = data_mod %>% filter(year == "2001"), alpha = 0.5)
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
+
+```
 
 ## Education and Single parent households
 
-Labor often propose policies that benefit families, and particularly single parent families. The scatterplots indicate that there may be a strong negative relationship between OneParent_House and support for the Liberal party. We find that this is true only for electorates with higher levels of education. For those with mean or lower education, single parent households have no effect on party preference (assuming mean Incomes). 
+```{r}
+## Voting against OneParent_House
+data_mod %>% ggplot(aes(x = OneParent_House, y = Perc_LNP)) + geom_point(aes(label = Election_Division)) + geom_smooth(method = "lm") + facet_wrap(~year)
+```
 
+Labor often propose policies that benefit families, and particularly single parent families. The scatterplots indicate that there may be a strong negative relationship between OneParent_House and support for the Liberal party. We find that this is mostly true across levels of education. For those with mean or higher education, the effect of single parent households is strong, with higher incidence of single parent households supporting the Labor party. A pocket of Liberal support appears at below-average levels of both variables. 
+
+```{r}
+grid_industry <- data.frame(Educ = rep(seq(-1.5,4, by = 0.05), times = 131),
+                            OneParent_House = rep(seq(-3,3.5, by = 0.05), each = 111),
+                            Extractive = 0, ManagerAdminClericalSales = 0, Born_SE_Europe = 0, RentLoan = 0, 
+                            NoReligion = 0, MedianAge = 0, Born_UK = 0, CurrentlyStudying = 0)
+grid_industry$z16 = predict(fit_ss_16, grid_industry)
+grid_industry$z13 = predict(fit_ss_13, grid_industry)
+grid_industry$z10 = predict(fit_ss_10, grid_industry)
+grid_industry$z07 = predict(fit_ss_07, grid_industry)
+grid_industry$z04 = predict(fit_ss_04, grid_industry)
+grid_industry$z01 = predict(fit_ss_01, grid_industry)
+
+p16 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=OneParent_House)) + 
+  geom_raster(aes(fill = z16)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z16), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z16)))) +
+  geom_point(data = data_mod %>% filter(year == "2016"), alpha = 0.5)
+
+p13 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=OneParent_House)) + 
+  geom_raster(aes(fill = z13)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z13), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z13)))) +
+  geom_point(data = data_mod %>% filter(year == "2013"), alpha = 0.5)
+
+
+p10 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=OneParent_House)) + 
+  geom_raster(aes(fill = z10)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z10), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z10)))) +
+  geom_point(data = data_mod %>% filter(year == "2010"), alpha = 0.5)
+
+p07 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=OneParent_House)) + 
+  geom_raster(aes(fill = z07)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z07), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z07)))) +
+  geom_point(data = data_mod %>% filter(year == "2007"), alpha = 0.5)
+
+p04 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=OneParent_House)) + 
+  geom_raster(aes(fill = z04)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z04), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z04)))) +
+  geom_point(data = data_mod %>% filter(year == "2004"), alpha = 0.5)
+
+p01 <- grid_industry %>% 
+  ggplot(aes(x=Educ, y=OneParent_House)) + 
+  geom_raster(aes(fill = z01)) + 
+#  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
+                       values = scales::rescale(c(min(grid_industry$z01), 40, 45, 
+                                                  50, 55, 60, max(grid_industry$z01)))) +
+  geom_point(data = data_mod %>% filter(year == "2001"), alpha = 0.5)
+
+grid.arrange(p01, p04, p07, p10, p13, p16)
+```
 
 ## Extractive and OfficeJobs
 
@@ -213,7 +359,7 @@ p16 <- grid_industry %>%
   ggplot(aes(x=Extractive, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z16)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z16), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z16)))) +
   geom_point(data = data_mod %>% filter(year == "2016"), alpha = 0.5)
@@ -222,7 +368,7 @@ p13 <- grid_industry %>%
   ggplot(aes(x=Extractive, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z13)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z13), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z13)))) +
   geom_point(data = data_mod %>% filter(year == "2013"), alpha = 0.5)
@@ -232,7 +378,7 @@ p10 <- grid_industry %>%
   ggplot(aes(x=Extractive, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z10)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z10), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z10)))) +
   geom_point(data = data_mod %>% filter(year == "2010"), alpha = 0.5)
@@ -241,7 +387,7 @@ p07 <- grid_industry %>%
   ggplot(aes(x=Extractive, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z07)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z07), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z07)))) +
   geom_point(data = data_mod %>% filter(year == "2007"), alpha = 0.5)
@@ -250,7 +396,7 @@ p04 <- grid_industry %>%
   ggplot(aes(x=Extractive, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z04)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z04), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z04)))) +
   geom_point(data = data_mod %>% filter(year == "2004"), alpha = 0.5)
@@ -259,7 +405,7 @@ p01 <- grid_industry %>%
   ggplot(aes(x=Extractive, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z01)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z01), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z01)))) +
   geom_point(data = data_mod %>% filter(year == "2001"), alpha = 0.5)
@@ -292,7 +438,7 @@ p16 <- grid_industry %>%
   ggplot(aes(x=Educ, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z16)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z16), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z16)))) +
   geom_point(data = data_mod %>% filter(year == "2016", ManagerAdminClericalSales > -2.5), alpha = 0.5)
@@ -301,7 +447,7 @@ p13 <- grid_industry %>%
   ggplot(aes(x=Educ, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z13)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z13), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z13)))) +
   geom_point(data = data_mod %>% filter(year == "2013", ManagerAdminClericalSales > -2.5), alpha = 0.5)
@@ -311,7 +457,7 @@ p10 <- grid_industry %>%
   ggplot(aes(x=Educ, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z10)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z10), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z10)))) +
   geom_point(data = data_mod %>% filter(year == "2010", ManagerAdminClericalSales > -2.5), alpha = 0.5)
@@ -320,7 +466,7 @@ p07 <- grid_industry %>%
   ggplot(aes(x=Educ, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z07)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z07), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z07)))) +
   geom_point(data = data_mod %>% filter(year == "2007", ManagerAdminClericalSales > -2.5), alpha = 0.5)
@@ -329,7 +475,7 @@ p04 <- grid_industry %>%
   ggplot(aes(x=Educ, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z04)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z04), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z04)))) +
   geom_point(data = data_mod %>% filter(year == "2004", ManagerAdminClericalSales > -2.5), alpha = 0.5)
@@ -338,7 +484,7 @@ p01 <- grid_industry %>%
   ggplot(aes(x=Educ, y=ManagerAdminClericalSales)) + 
   geom_raster(aes(fill = z01)) + 
 #  scale_fill_gradient2(low = "#ff0000", mid = "white", high = "#3366ff", midpoint = 50) 
-  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff6666", "white", "#668cff", "#668cff", "#3366ff"), 
+  scale_fill_gradientn(colours = c("#ff0000", "#ff6666", "#ff9999", "white", "#3399ff", "#0066ff", "#3366ff"), 
                        values = scales::rescale(c(min(grid_industry$z01), 40, 45, 
                                                   50, 55, 60, max(grid_industry$z01)))) +
   geom_point(data = data_mod %>% filter(year == "2001", ManagerAdminClericalSales > -2.5), alpha = 0.5)
