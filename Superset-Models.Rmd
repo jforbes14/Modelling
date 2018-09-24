@@ -297,6 +297,25 @@ Across the six elections, only two electorates have moderately high influence - 
 
 The most influential electorate is Kalgoorlie in 2001, with cook distance of 0.31. As this is not particularly high, it does not appear that there are any outliers that should be removed from the model. 
 
+## Checking the extent of omitted variable bias
+How much information in the omitted variables is not captured by the included variables?
+Regress each of the omitted variables on the same super set, and see what the R-squared values are.
+```{r}
+OVB_lm <- data.frame(varname = names(data_mod), r2 = 0, adj_r2 = 0) %>% 
+  filter(!varname %in% c("Election_Division", "Perc_LNP", "Swing", "year", superset$varname %>% unlist %>% as.character))
+
+for (i in 1:nrow(OVB_lm)) {
+  varname = OVB_lm$varname[i] %>% as.character()
+  data_ovb = data_mod %>% filter(year == "2016") %>% select(c(superset$varname %>% as.character), varname)
+  formula_ovb = paste0(varname, " ~ .")
+  lmod = lm(formula = formula_ovb,
+            data = data_ovb)
+  OVB_lm$r2[i] = summary(lmod)$r.squared
+  OVB_lm$adj_r2[i] = summary(lmod)$adj.r.squared
+}
+```
+
+
 ## Analysis
 
 ```{r}
