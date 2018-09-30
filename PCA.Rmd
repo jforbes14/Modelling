@@ -249,6 +249,11 @@ vis_loadings %>%
   ggplot(aes(x=reorder(metric,-PC4), y=PC4)) + geom_line(aes(col = important4, size = important4)) +
   geom_point(col = "cyan", size = 0.6, alpha = 0.4) + 
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 6))
+
+# Save
+save(vis_loadings, file = "./Clean-Data/vis_loadings.rda")
+pve_each <- pve_all
+save(pve_each, file = "./Clean-Data/pve_each.rda")
 ```
 
 ## Proportion of variance explained
@@ -260,9 +265,9 @@ The loadings on each of the first two principal components appear to be relative
 Applying this same interpretation to the third and fourth components can be done, but the patterns of loadings vary more across years. Higher incidence of house ownership and marriage are associated with the third component, and higher labor force participation with less retirees is assocated with the fourth.
 
 ## PCA on the combined set
-We have seen that the Census profiles each year independently yield reasonably consistent principal components, so the decision is made to apply PCA to a dataset containing the combined set of profiles. This allows us to use principal component regression to build a longitudinal model for the two party preferred vote.
+We have seen that the Census profiles each year independently yield reasonably consistent principal components, so the decision is made to apply PCA to a dataset containing the combined set of profiles.
 
-Each years' Census profiles are scaled and centred before combining. This way differences in electorate socio-demographics will be be measured relative to that election year. Otherwise, country-wide trends over time will distort comparison. For example, rental prices have increased over time, even after adjusting for inflation, so if rental prices are not standardized each year, then 2016 prices in a relatively cheap electorate will appear comparable with an expensive electorate by 2001 prices.
+Each years' Census profiles are scaled and centred before combining, as previously discussed. This way differences in electorate socio-demographics will be be measured relative to that election year. Otherwise, country-wide trends over time will distort comparison. For example, rental prices have increased over time, even after adjusting for inflation, so if rental prices are not standardized each year, then 2016 prices in a relatively cheap electorate will appear comparable with an expensive electorate by 2001 prices.
 
 
 # Doing PCA on combined set
@@ -311,12 +316,16 @@ abs_z_all$Election_Division[which(abs_z_all$Election_Division == "PROSPECT")] = 
 
 abs_sc_z_all$Election_Division <- toupper(abs_sc_z_all$Election_Division)
 abs_sc_z_all$Election_Division[which(abs_sc_z_all$Election_Division == "PROSPECT")] = "MCMAHON"
+
+# Save
+save(pve_all, file = "./Clean-Data/pve_all.rda")
 ```
 When PCA is run on the combined (standardized) dataset, the first four PCs explain 72.31% of the total variation. We see that the fifth PC contributes significantly less than the fourth, so we will use only these four PCs in subsequent models.
 
 Interpreting PCs
 ```{r}
 pc_all_interpret <- orientPCs(pc_all) %>% as.data.frame() %>% rownames_to_column(var = "metric")
+save(pc_all_interpret, file = "./Clean-Data/pc_all_interpret.rda")
 
 #PC1
 pc_all_interpret %>% 

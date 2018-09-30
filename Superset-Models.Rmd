@@ -24,8 +24,9 @@ superset_AW_vars <- var_imp_all %>%
   group_by(year) %>% 
   top_n(n = 5, wt = sum_w) %>%
   ungroup() %>% 
-  select(var, varname) %>% 
-  unique()
+  group_by(var, varname) %>% 
+  summarise(n = n()) %>% 
+  select(var, varname)
 
 superset <- superset_AW_vars
 save(superset, file = "./Clean-Data/superset.rda")
@@ -301,18 +302,33 @@ The most influential electorate is Kalgoorlie in 2001, with cook distance of 0.3
 How much information in the omitted variables is not captured by the included variables?
 Regress each of the omitted variables on the same super set, and see what the R-squared values are.
 ```{r}
+OVB_fn <- function(Year) {
+  Year <- as.character(Year)
+  
 OVB_lm <- data.frame(varname = names(data_mod), r2 = 0, adj_r2 = 0) %>% 
   filter(!varname %in% c("Election_Division", "Perc_LNP", "Swing", "year", superset$varname %>% unlist %>% as.character))
 
 for (i in 1:nrow(OVB_lm)) {
   varname = OVB_lm$varname[i] %>% as.character()
-  data_ovb = data_mod %>% filter(year == "2016") %>% select(c(superset$varname %>% as.character), varname)
+  data_ovb = data_mod %>% filter(year == Year, !is.na(Perc_LNP)) %>% select(c(superset$varname %>% as.character), varname)
   formula_ovb = paste0(varname, " ~ .")
   lmod = lm(formula = formula_ovb,
             data = data_ovb)
   OVB_lm$r2[i] = summary(lmod)$r.squared
   OVB_lm$adj_r2[i] = summary(lmod)$adj.r.squared
 }
+
+OVB_lm <- OVB_lm %>% mutate(year = Year)
+
+return(OVB_lm)
+}
+
+OVB_all <- bind_rows(OVB_fn(2001), OVB_fn(2004), OVB_fn(2007), OVB_fn(2010), OVB_fn(2013), OVB_fn(2016)) %>% 
+  select(-adj_r2)
+
+OVB_all %>% ggplot(aes(x=r2, y = varname)) + 
+  geom_point(aes(col = year)) +
+  labs(x = "R-squared", y = "Omitted Variable")
 ```
 
 
@@ -339,7 +355,6 @@ ss_coef %>%
   theme(axis.text.x = element_text(angle = 60, hjust=1, size = 12))
 
 ```
-
 
 # Plotting coefficients over time
 
