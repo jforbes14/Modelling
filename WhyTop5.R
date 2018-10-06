@@ -2,139 +2,201 @@
 
 ## Function that fits all +1 variable models for top 10 AIC and a random 10
 
-step_number <- function(y, x) {
+# Idea: fit all 1 variable, initialize with 2 variable (because doesn't use too much power)
+# then choose top 10 plus 10 other random models and fit all possible +1 models. iterate up to 52.
+
+step_fn <- function(y, x) {
   
-  num_vars = 1
+  # Set up data frame for step models
+  final_models <- data.frame(matrix(NA, nrow = 0, ncol = 7))
+  colnames(final_models) = c("iter", "num_vars", "vars", "varname", "AIC", "r2", "adj_r2")
+
+  # One variable models
+  one_models = data.frame(matrix(NA, nrow = 30, ncol = 7))
+  colnames(one_models) = c("iter", "num_vars", "vars", "varname", "AIC", "r2", "adj_r2")
+  one_models$num_vars = 1
   
-  for (k in 1:choose(num_vars))
+  for (k in 1:nrow(one_models)) {
+    dat = cbind(y, x[, k])
+    mod <- lm(Perc_LNP ~ ., data = dat)
     
+    one_models$vars[k] = list(k)
+    one_models$varname[k] = list(names(x)[k])
+    one_models$AIC[k] = AIC(mod)
+    one_models$r2[k] = summary(mod)$r.squared
+    one_models$adj_r2[k] = summary(mod)$adj.r.squared
+    one_models$iter[k] = k
+  }
   
-  all_models <- data.frame()
+  # Add to final models
+  final_models <- bind_rows(final_models, one_models)
   
-  ## START
   
-  for (k in 5:(ncol(x)-1)) { # k-way models
-    #  prev_models <- top100_all[ (100*(k-5) + 1):(100*(k - 4)), ]
-    prev_models <- top100_all %>% filter(num_vars == k)
+  
+  # Two variable models (start subsets)
+  
+  combos_2 = combn(1:30, 2)
+  
+  two_models = data.frame(matrix(NA, nrow = ncol(combos_2), ncol = 7))
+  colnames(two_models) = c("iter", "num_vars", "vars", "varname", "AIC", "r2", "adj_r2")
+  two_models$num_vars = 2
+  
+  for (k in 1:nrow(two_models)) {
+    index = combos_2[,k]
+    dat = cbind(y, x[, index])
+    mod <- lm(Perc_LNP ~ ., data = dat)
     
-    prev_no <- min(100, nrow(prev_models))
+    two_models$vars[k] = list(index)
+    two_models$varname[k] = list(names(x)[index])
+    two_models$AIC[k] = AIC(mod)
+    two_models$r2[k] = summary(mod)$r.squared
+    two_models$adj_r2[k] = summary(mod)$adj.r.squared
+    two_models$iter[k] = k
+  }
+  
+  # Take the top 10 models with highest r2
+  top_models <- two_models %>% 
+    arrange(-r2) %>% 
+    top_n(10, wt = r2) %>% 
+    mutate(type = "Top")
+  
+  # Take a random 10
+  set.seed(123)
+  sample_models <- two_models %>% 
+    filter(!iter %in% top_models$iter) %>% 
+    sample_n(size = 10) %>% 
+    mutate(type = "Random")
+  
+  # Combine 
+  subset_models <- bind_rows(top_models, sample_models)
+  final_models <- bind_rows(final_models, subset_models)
+  
+  # Now iterate for up to 29 variable models
+  while (max(final_models$num_vars) < 30) {
     
-    for (j in 1:prev_no) { # each of the previous top 100 models
-      prev_iter <- prev_models[j,]
-      vars = unlist(prev_iter$vars, use.names = FALSE)
-      #ticker = 0
+    # Previous number of variables
+    nvar = max(final_models$num_vars)
+    print(nvar)
+    
+    # Take only the 20 models from previous iteration
+    subset_models <- final_models %>% filter(num_vars == nvar)
+    
+    # Set up data frame to hold all +1 variable models
+    nmod = nrow(subset_models)*(ncol(x) - subset_models$num_vars[1])
+    all_models = data.frame(matrix(NA, nrow = nmod, ncol = 7))
+    colnames(all_models) = c("iter", "num_vars", "vars", "varname", "AIC", "r2", "adj_r2")
+    all_models$num_vars = subset_models$num_vars[1] + 1
+    
+    # Initialize iter
+    iter = 0
+    
+    # Loop
+    for (k in 1:nrow(subset_models)) {
+      vars = subset_models$vars[k] %>% unlist
+      add_vars = (1:30)[-vars]
       
-      for (i in 1:ncol(x)) { # adding each unused variable to the model
+      for (j in add_vars) {
+        iter = iter + 1
         
-        if (!i %in% vars) {
-          #     ticker = ticker + 1 # ticker to count models branching off previous model
-          
-          new_vars = c(vars,i)
-          
-          dat = cbind(y, x[,new_vars])
-          
-          mod <- lm(y ~ ., dat)
-          
-          new_coef = mod$coefficients[-1]
-          new_t = (summary(mod)$coefficients %>% as.data.frame)$"t value"[-1]
-          r2 = summary(mod)$r.squared
-          adj_r2 = summary(mod)$adj.r.squared
-          AIC = AIC(mod)
-          BIC = BIC(mod)
-          logL = logLik(mod)
-          
-          #      index = 100*(k-4) + (52-k)*(j-1) + ticker # row number
-          index = sum(!is.na(top100_all$AIC)) + 1 #(ncol(x)-k)*(j-1) + ticker # row number
-          
-          top100_all$vars[index] <- list(new_vars)
-          top100_all$coef[index] <- list(new_coef)
-          top100_all$t[index] <- list(new_t)
-          top100_all$r2[index] <- r2
-          top100_all$AIC[index] <- AIC
-          top100_all$adj_r2[index] <- adj_r2
-          top100_all$BIC[index] <- BIC
-          top100_all$logL[index] <- logL
-          
-          top100_all$num_vars[index] = k + 1
-          
-        }
+        index = c(vars,j)
+        dat = cbind(y, x[, index])
+        mod <- lm(Perc_LNP ~ ., data = dat)
+        
+        all_models$vars[iter] = list(index)
+        all_models$varname[iter] = list(names(x)[index])
+        all_models$AIC[iter] = AIC(mod)
+        all_models$r2[iter] = summary(mod)$r.squared
+        all_models$adj_r2[iter] = summary(mod)$adj.r.squared
+        all_models$iter[iter] = iter
+        
       }
+      
     }
     
-    # Keep only the lowest 100 AIC from new models
-    new_models <- top100_all[(100*(k - 4) + 1):nrow(top100_all),] %>% 
-      arrange(AIC)
+    # Filter out repeat models
+    all_models <- all_models %>% 
+      group_by(AIC) %>% 
+      top_n(n = 1, wt = iter) %>% 
+      ungroup()
     
-    n = length(unique(new_models$AIC))
+    # Take the top 10 models with highest r2
+    top_models <- all_models %>% 
+      arrange(-r2) %>% 
+      top_n(10, wt = r2) %>% 
+      mutate(type = "Top")
     
-    if (n >= 100) {
-      
-      AIC100 <- data.frame(z = 1:100, AIC = unique(new_models$AIC)[1:100])
-      new_models2 <- new_models %>% 
-        inner_join(AIC100, by = "AIC")
-      
-      unique_new_models <- new_models2[!duplicated(new_models2$z),] %>% 
-        dplyr::select(-z)
-      
-      top100_all[(100*(k - 4) + 1):(100*(k - 4) + 100), ] <- unique_new_models[1:100, ]
-      top100_all[(100*(k - 4) + 100 + 1):((ncol(x)-4)*100), ] = NA
-      
+    # Take a random 10 / Take all remaining if less than 20
+  
+    if (nrow(all_models) >= 20) {
+      set.seed(123 + num_vars)
+      sample_models <- all_models %>% 
+        filter(!iter %in% top_models$iter) %>%
+        sample_n(size = 10) %>% 
+        mutate(type = "Random")
     } else {
-      
-      AIC100 <- data.frame(z = 1:n, AIC = unique(new_models$AIC)[1:n])
-      new_models2 <- new_models %>% 
-        inner_join(AIC100, by = "AIC")
-      
-      unique_new_models <- new_models2[!duplicated(new_models2$z),] %>% 
-        dplyr::select(-z)
-      
-      top100_all[(100*(k - 4) + 1):(100*(k - 4) + n), ] <- unique_new_models[1:n, ]
-      top100_all[(100*(k - 4) + n + 1):((ncol(x)-4)*100), ] = NA
-      
+      sample_models <- all_models %>% 
+        filter(!iter %in% top_models$iter) %>%
+        mutate(type = "Random")
     }
-    print(k)
+   
+    
+    # Combine 
+    final_models <- bind_rows(final_models, top_models, sample_models)
+    
   }
   
-  
-  ## Omit NA rows
-  
-  top100_all <- na.omit(top100_all)
-  
-  return(top100_all)
-  if (nrow(all5way) != 100) {
-    all5way <- all5way %>% 
-      arrange(AIC) %>% top_n(100)
-  }
-  
-  top100_all <- data.frame(matrix(NA, nrow = (ncol(x)-4)*100, ncol = 22))
-  colnames(top100_all) <- colnames(all5way)
-  
-  top100_all <- top100_all %>% 
-    mutate(num_vars = rep(5:ncol(x), each = 100)) 
-  
-  top100_all[1:100, ] <- mutate(all5way, num_vars = 5, iter = 1:100)
-  
-  
-  top100_all$vars = apply(top100_all[which(startsWith(colnames(top100_all), "var"))],1,list)
-  top100_all$coef = apply(top100_all[which(startsWith(colnames(top100_all), "coef"))],1,list)
-  top100_all$t = apply(top100_all[which(startsWith(colnames(top100_all), "t"))],1,list)
-  
-  top100_all <- top100_all %>% 
-    dplyr::select(-c(var1, var2, var3, var4, var5, 
-                     t1, t2, t3, t4, t5, 
-                     coef1, coef2, coef3, coef4, coef5,
-                     iter, intercept))
-  
-  
-  
-}
+  return(final_models)
+}  
+    
 
-x2 = data_mod16 %>% 
-  dplyr::select(-c(Perc_LNP, Election_Division, year, Swing)) %>% 
-  scale() %>% # already has been scaled, so this doesn't change anything
-  as.data.frame() 
-y2 = data_mod16$Perc_LNP
+############################## EXAMPLE ##############################
 
-test <- step100AIC(all5way = top100_5way, 
-                   y = y2, 
-                   x = x2)
+# 2016
+y = data_mod %>% filter(year == "2016") %>% select(Perc_LNP)
+x = data_mod %>% filter(year == "2016") %>% select(-c(Perc_LNP, year, Swing, Election_Division))
+step_2016 <- step_fn(y = y, x = x) 
+
+# Other years
+step_2013 <- step_fn(y = data_mod %>% filter(year == "2013", !is.na(Perc_LNP)) %>% 
+                       select(Perc_LNP),
+                     x = data_mod %>% filter(year == "2013", !is.na(Perc_LNP)) %>% 
+                       select(-c(Perc_LNP, year, Swing, Election_Division)))
+
+step_2010 <- step_fn(y = data_mod %>% filter(year == "2010", !is.na(Perc_LNP)) %>% 
+                       select(Perc_LNP),
+                     x = data_mod %>% filter(year == "2010", !is.na(Perc_LNP)) %>% 
+                       select(-c(Perc_LNP, year, Swing, Election_Division)))
+
+step_2007 <- step_fn(y = data_mod %>% filter(year == "2007", !is.na(Perc_LNP)) %>% 
+                       select(Perc_LNP),
+                     x = data_mod %>% filter(year == "2007", !is.na(Perc_LNP)) %>% 
+                       select(-c(Perc_LNP, year, Swing, Election_Division)))
+
+step_2004 <- step_fn(y = data_mod %>% filter(year == "2004", !is.na(Perc_LNP)) %>% 
+                       select(Perc_LNP),
+                     x = data_mod %>% filter(year == "2004", !is.na(Perc_LNP)) %>% 
+                       select(-c(Perc_LNP, year, Swing, Election_Division)))
+
+step_2001 <- step_fn(y = data_mod %>% filter(year == "2001", !is.na(Perc_LNP)) %>% 
+                       select(Perc_LNP),
+                     x = data_mod %>% filter(year == "2001", !is.na(Perc_LNP)) %>% 
+                       select(-c(Perc_LNP, year, Swing, Election_Division)))
+
+# Plot
+step_all <- bind_rows(step_2016 %>% mutate(year = "2016"),
+                      step_2013 %>% mutate(year = "2013"),
+                      step_2010 %>% mutate(year = "2010"),
+                      step_2007 %>% mutate(year = "2007"),
+                      step_2004 %>% mutate(year = "2004"),
+                      step_2001 %>% mutate(year = "2001")) %>% 
+  group_by(num_vars, year) %>% 
+  mutate(max_r2 = ifelse(r2 == max(r2), 1, 0))
+
+
+ggplot(aes(x = num_vars, y = r2), data = step_all) + 
+  geom_point(alpha = 0.5) +
+  geom_line(data = step_all %>% filter(max_r2 == 1)) +
+  facet_wrap(~year)
+
+# Save data
+save(step_all, file = "Clean-Data/step_all.rda")
